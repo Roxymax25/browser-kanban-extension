@@ -5,9 +5,9 @@ Eine Chrome Extension für persönliches Aufgaben- und Zwischenablage-Management
 ![Version](https://img.shields.io/badge/version-2.9-orange)
 ![Chrome](https://img.shields.io/badge/chrome-extension-green)
 
-## 🎯 Features
+## Features
 
-### 📋 Kanban-Board
+### Kanban-Board
 
 - **Drei Spalten**: Zu erledigen → In Bearbeitung → Erledigt
 - **Drag & Drop**: Aufgaben einfach zwischen Spalten verschieben
@@ -17,7 +17,7 @@ Eine Chrome Extension für persönliches Aufgaben- und Zwischenablage-Management
 - **Timer**: Zeigt automatisch die Bearbeitungszeit bei aktiven Aufgaben
 - **Status-Verlauf**: Historie aller Statusänderungen im Detail-Modal
 
-### 📝 Zwischenablage
+### Zwischenablage
 
 - **Text speichern**: Texte direkt in die Zwischenablage einfügen
 - **Bilder speichern**: Bilder per Drag & Drop oder Paste hinzufügen
@@ -25,7 +25,7 @@ Eine Chrome Extension für persönliches Aufgaben- und Zwischenablage-Management
 - **Aufgabe erstellen**: Direkt aus Zwischenablage-Einträgen neue Aufgaben anlegen
 - **Globales Paste**: `Strg+V` überall im Dashboard speichert automatisch
 
-### ⏱️ Arbeitszeittracking
+### Arbeitszeittracking
 
 - **Start/Stop**: Arbeitssession starten und beenden
 - **Pause/Weiter**: Sessions pausieren ohne zu beenden
@@ -33,12 +33,12 @@ Eine Chrome Extension für persönliches Aufgaben- und Zwischenablage-Management
 - **Gesamtzeit**: Automatische Berechnung der Gesamtarbeitszeit
 - **Persistenz**: Timer läuft weiter, auch wenn Tab geschlossen wird
 
-### 📤 Export
+### Export
 
 - **Markdown-Export**: Erledigte Aufgaben als Markdown kopieren
 - Enthält Bearbeitungszeit und Abschlusszeitpunkt
 
-## ⌨️ Tastenkürzel
+## Tastenkürzel
 
 | Kürzel | Aktion |
 |--------|--------|
@@ -47,7 +47,7 @@ Eine Chrome Extension für persönliches Aufgaben- und Zwischenablage-Management
 | `Escape` | Modal schließen |
 | `Strg+V` | Text/Bild in Zwischenablage speichern |
 
-## 🎨 Design
+## Design
 
 - **Dark Theme**: Augenfreundliches dunkles Design
 - **Orange Akzente**: Moderne Farbakzente
@@ -55,21 +55,21 @@ Eine Chrome Extension für persönliches Aufgaben- und Zwischenablage-Management
 - **Animationen**: Sanfte Übergänge und Hover-Effekte
 - **Responsive**: Anpassung an verschiedene Fenstergrößen
 
-## 📦 Installation
+## Installation
 
 1. Repository klonen oder als ZIP herunterladen
-2. Chrome öffnen → `chrome://extensions`
+2. Chrome öffnen und `chrome://extensions` aufrufen
 3. "Entwicklermodus" aktivieren (oben rechts)
 4. "Entpackte Erweiterung laden" klicken
 5. Projektordner auswählen
 
-## 🚀 Verwendung
+## Verwendung
 
-- **Extension-Icon klicken** → Dashboard öffnet sich in neuem Tab
-- **Erneut klicken** → Springt zum vorhandenen Dashboard-Tab
+- **Extension-Icon klicken**: Dashboard öffnet sich in neuem Tab
+- **Erneut klicken**: Springt zum vorhandenen Dashboard-Tab
 - Alle Daten werden automatisch in Chrome gespeichert
 
-## 📁 Dateistruktur
+## Dateistruktur
 
 ```
 ChromePlugin_Notes/
@@ -82,17 +82,13 @@ ChromePlugin_Notes/
 └── README.md          # Diese Datei
 ```
 
-## 🔧 Technologien
+## Technologien
 
 - **Vanilla JavaScript** (keine Frameworks)
 - **CSS3** mit Custom Properties
 - **Chrome Storage API** für Datenpersistenz
 - **Lucide Icons** (inline SVG)
 
-## 📄 Lizenz
+## Lizenz
 
 MIT License - Frei verwendbar und anpassbar.
-
----
-
-*Entwickelt mit ❤️ für produktives Arbeiten*
