@@ -42,12 +42,47 @@ document.addEventListener('DOMContentLoaded', () => {
     const currentDateEl = document.getElementById('current-date');
     const currentTimeEl = document.getElementById('current-time');
 
+    // DOM Elements - Task History in Modal
+    const taskHistorySection = document.getElementById('task-history-section');
+    const taskHistoryList = document.getElementById('task-history-list');
+
+    // DOM Elements - Time Tracker
+    const trackerTimeEl = document.getElementById('tracker-time');
+    const trackerDisplay = document.querySelector('.tracker-display');
+    const trackerStartBtn = document.getElementById('tracker-start-btn');
+    const trackerPauseBtn = document.getElementById('tracker-pause-btn');
+    const trackerLogBtn = document.getElementById('tracker-log-btn');
+    const worktimeModal = document.getElementById('worktime-modal');
+    const worktimeCloseBtn = document.querySelector('.worktime-close-btn');
+    const worktimeEntriesEl = document.getElementById('worktime-entries');
+    const worktimeSummaryEl = document.getElementById('worktime-summary');
+    const clearWorktimeBtn = document.getElementById('clear-worktime-btn');
+
+    // DOM Elements - Info Modal
+    const infoModal = document.getElementById('info-modal');
+    const infoCloseBtn = document.querySelector('.info-close-btn');
+    const infoInput = document.getElementById('info-input');
+    const saveInfoBtn = document.getElementById('save-info-btn');
+    const clearInfoBtn = document.getElementById('clear-info-btn');
+
     // State
     let tasks = [];
     let clipboardItems = [];
     let currentDragItem = null;
     let editingTaskId = null;
+    let editingInfoTaskId = null;
     let selectedPriority = 'medium';
+
+    // Time Tracker State
+    let workTimeSessions = [];
+    let timeTracker = {
+        isRunning: false,
+        isPaused: false,
+        startTime: null,
+        pauseStartTime: null,
+        totalPausedTime: 0
+    };
+    let trackerInterval = null;
 
     // Initialize
     init();
@@ -61,12 +96,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function loadData() {
-        chrome.storage.local.get(['tasks', 'clipboardItems'], (result) => {
+        chrome.storage.local.get(['tasks', 'clipboardItems', 'workTimeSessions', 'timeTracker'], (result) => {
             if (result.tasks) {
                 tasks = result.tasks;
             }
             if (result.clipboardItems) {
                 clipboardItems = result.clipboardItems;
+            }
+            if (result.workTimeSessions) {
+                workTimeSessions = result.workTimeSessions;
+            }
+            if (result.timeTracker && result.timeTracker.isRunning) {
+                // Restore running timer
+                timeTracker = result.timeTracker;
+                resumeTrackerFromStorage();
             }
             renderTasks();
             renderClipboardItems();
@@ -77,7 +120,9 @@ document.addEventListener('DOMContentLoaded', () => {
     function saveData() {
         chrome.storage.local.set({
             tasks: tasks,
-            clipboardItems: clipboardItems
+            clipboardItems: clipboardItems,
+            workTimeSessions: workTimeSessions,
+            timeTracker: timeTracker
         });
     }
 
@@ -171,7 +216,15 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderTasks() {
         [todoList, inProgressList, doneList].forEach(list => list.innerHTML = '');
 
-        tasks.forEach(task => {
+        // Sort by priority: high > medium > low
+        const priorityOrder = { high: 0, medium: 1, low: 2 };
+        const sortedTasks = [...tasks].sort((a, b) => {
+            const priorityA = priorityOrder[a.priority] ?? 1;
+            const priorityB = priorityOrder[b.priority] ?? 1;
+            return priorityA - priorityB;
+        });
+
+        sortedTasks.forEach(task => {
             const card = createTaskElement(task);
             if (task.status === 'todo') todoList.appendChild(card);
             else if (task.status === 'in-progress') inProgressList.appendChild(card);
@@ -202,36 +255,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const createdAt = task.createdAt || parseInt(task.id);
 
-        // In-Progress Timer
+        // In-Progress Timer (compact)
         const minutesInProgress = getMinutesInProgress(task);
         let timerHtml = '';
         if (minutesInProgress !== null) {
-            timerHtml = `<div class="task-timer">${icons.timer} In Bearbeitung seit: <strong>${formatDuration(minutesInProgress)}</strong></div>`;
+            timerHtml = `<span class="task-timer-inline">${icons.timer} ${formatDuration(minutesInProgress)}</span>`;
         }
 
-        // Build history HTML
-        let historyHtml = '';
-        if (task.history && task.history.length > 0) {
-            historyHtml = '<div class="task-history">';
-            task.history.forEach(entry => {
-                historyHtml += `<div class="history-entry">${icons.arrow} ${getStatusLabel(entry.status)} - ${formatDate(entry.timestamp)}</div>`;
-            });
-            historyHtml += '</div>';
+        // Additional Info
+        let additionalInfoHtml = '';
+        if (task.additionalInfo && task.additionalInfo.trim()) {
+            additionalInfoHtml = `<div class="task-additional-info">${icons.info} ${escapeHtml(task.additionalInfo)}</div>`;
         }
 
         div.innerHTML = `
             <div class="task-content">${escapeHtml(task.content)}</div>
-            ${timerHtml}
-            <div class="task-timestamps">
-                <div class="task-created">${icons.calendar} Erstellt: ${formatDateTime(createdAt)}</div>
-                ${historyHtml}
-            </div>
-            <div class="task-meta">
-                <div class="task-actions">
-                    <button class="task-action-btn copy-btn" title="In Zwischenablage kopieren">${icons.copy}</button>
-                    <button class="task-action-btn delete-btn" title="Löschen">${icons.trash}</button>
+            ${additionalInfoHtml}
+            <div class="task-footer">
+                <div class="task-timestamps-inline">
+                    <span class="task-created">${icons.calendar} ${formatDateTime(createdAt)}</span>
+                    ${timerHtml}
                 </div>
-                <span class="task-priority priority-${task.priority || 'medium'}">${getPriorityLabel(task.priority)}</span>
+                <div class="task-meta">
+                    <div class="task-actions">
+                        <button class="task-action-btn copy-btn" title="In Zwischenablage kopieren">${icons.copy}</button>
+                        <button class="task-action-btn info-btn" title="Zusätzliche Info">${icons.info}</button>
+                        <button class="task-action-btn delete-btn" title="Löschen">${icons.trash}</button>
+                    </div>
+                    <span class="task-priority priority-${task.priority || 'medium'}">${getPriorityLabel(task.priority)}</span>
+                </div>
             </div>
         `;
 
@@ -268,6 +320,12 @@ document.addEventListener('DOMContentLoaded', () => {
             saveData();
             renderTasks();
             showToast('Aufgabe gelöscht', 'info');
+        });
+
+        // Info button
+        div.querySelector('.info-btn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            openInfoModal(task);
         });
 
         return div;
@@ -460,10 +518,14 @@ document.addEventListener('DOMContentLoaded', () => {
         taskInput.value = '';
         modalTitle.textContent = 'Neue Aufgabe';
         deleteTaskBtn.classList.add('hidden');
+        taskHistorySection.classList.add('hidden');
         selectedPriority = 'medium';
         updatePrioritySelection();
         showModal();
-        taskInput.focus();
+        // Delay focus to after modal animation
+        setTimeout(() => {
+            taskInput.focus();
+        }, 100);
     }
 
     function openEditModal(task) {
@@ -473,6 +535,27 @@ document.addEventListener('DOMContentLoaded', () => {
         deleteTaskBtn.classList.remove('hidden');
         selectedPriority = task.priority || 'medium';
         updatePrioritySelection();
+
+        // Show history in modal
+        if (task.history && task.history.length > 0) {
+            taskHistorySection.classList.remove('hidden');
+            let historyHtml = '';
+            task.history.forEach(entry => {
+                historyHtml += `
+                    <div class="history-entry-modal">
+                        ${icons.arrow}
+                        <span class="history-status">${getStatusLabel(entry.status)}</span>
+                        <span>-</span>
+                        <span>${formatDate(entry.timestamp)}</span>
+                    </div>
+                `;
+            });
+            taskHistoryList.innerHTML = historyHtml;
+        } else {
+            taskHistorySection.classList.add('hidden');
+            taskHistoryList.innerHTML = '';
+        }
+
         showModal();
         taskInput.focus();
     }
@@ -489,6 +572,51 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => {
             modal.classList.add('hidden');
         }, 300);
+    }
+
+    // Info Modal Functions
+    function openInfoModal(task) {
+        editingInfoTaskId = task.id;
+        infoInput.value = task.additionalInfo || '';
+        infoModal.classList.remove('hidden');
+        requestAnimationFrame(() => {
+            infoModal.classList.add('visible');
+        });
+        setTimeout(() => {
+            infoInput.focus();
+        }, 100);
+    }
+
+    function closeInfoModal() {
+        infoModal.classList.remove('visible');
+        setTimeout(() => {
+            infoModal.classList.add('hidden');
+        }, 300);
+        editingInfoTaskId = null;
+    }
+
+    function saveInfo() {
+        if (!editingInfoTaskId) return;
+        const task = tasks.find(t => t.id === editingInfoTaskId);
+        if (task) {
+            task.additionalInfo = infoInput.value.trim();
+            saveData();
+            renderTasks();
+            showToast(task.additionalInfo ? 'Info gespeichert' : 'Info entfernt', 'success');
+        }
+        closeInfoModal();
+    }
+
+    function clearInfo() {
+        if (!editingInfoTaskId) return;
+        const task = tasks.find(t => t.id === editingInfoTaskId);
+        if (task) {
+            task.additionalInfo = '';
+            saveData();
+            renderTasks();
+            showToast('Info gelöscht', 'info');
+        }
+        closeInfoModal();
     }
 
     function updatePrioritySelection() {
@@ -523,16 +651,347 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 3000);
     }
 
+    // ============ TIME TRACKER FUNCTIONS ============
+
+    function resumeTrackerFromStorage() {
+        updateTrackerUI();
+        if (!timeTracker.isPaused) {
+            trackerInterval = setInterval(updateTrackerDisplay, 1000);
+        }
+        updateTrackerDisplay();
+    }
+
+    function startTracker() {
+        timeTracker.isRunning = true;
+        timeTracker.isPaused = false;
+        timeTracker.startTime = Date.now();
+        timeTracker.totalPausedTime = 0;
+        timeTracker.pauseStartTime = null;
+
+        updateTrackerUI();
+        trackerInterval = setInterval(updateTrackerDisplay, 1000);
+        saveData();
+        showToast('Zeiterfassung gestartet', 'success');
+    }
+
+    function stopTracker() {
+        if (!timeTracker.isRunning) return;
+
+        const endTime = Date.now();
+        const duration = endTime - timeTracker.startTime - timeTracker.totalPausedTime;
+
+        // Save session
+        const session = {
+            id: Date.now().toString(),
+            startTime: timeTracker.startTime,
+            endTime: endTime,
+            duration: duration,
+            pausedTime: timeTracker.totalPausedTime
+        };
+        workTimeSessions.unshift(session);
+
+        // Reset tracker
+        timeTracker.isRunning = false;
+        timeTracker.isPaused = false;
+        timeTracker.startTime = null;
+        timeTracker.totalPausedTime = 0;
+        timeTracker.pauseStartTime = null;
+
+        clearInterval(trackerInterval);
+        trackerInterval = null;
+
+        updateTrackerUI();
+        trackerTimeEl.textContent = '00:00:00';
+        saveData();
+        showToast(`Arbeitszeit gespeichert: ${formatTrackerTime(duration)}`, 'success');
+    }
+
+    function pauseTracker() {
+        if (!timeTracker.isRunning || timeTracker.isPaused) return;
+
+        timeTracker.isPaused = true;
+        timeTracker.pauseStartTime = Date.now();
+
+        clearInterval(trackerInterval);
+        trackerInterval = null;
+
+        updateTrackerUI();
+        saveData();
+        showToast('Zeiterfassung pausiert', 'info');
+    }
+
+    function resumeTracker() {
+        if (!timeTracker.isRunning || !timeTracker.isPaused) return;
+
+        timeTracker.totalPausedTime += Date.now() - timeTracker.pauseStartTime;
+        timeTracker.isPaused = false;
+        timeTracker.pauseStartTime = null;
+
+        trackerInterval = setInterval(updateTrackerDisplay, 1000);
+
+        updateTrackerUI();
+        saveData();
+        showToast('Zeiterfassung fortgesetzt', 'success');
+    }
+
+    function updateTrackerDisplay() {
+        if (!timeTracker.isRunning) return;
+
+        let elapsed = Date.now() - timeTracker.startTime - timeTracker.totalPausedTime;
+        if (timeTracker.isPaused && timeTracker.pauseStartTime) {
+            elapsed = timeTracker.pauseStartTime - timeTracker.startTime - timeTracker.totalPausedTime;
+        }
+
+        trackerTimeEl.textContent = formatTrackerTime(elapsed);
+    }
+
+    function updateTrackerUI() {
+        if (timeTracker.isRunning) {
+            trackerStartBtn.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="6" y="4" width="4" height="16"></rect>
+                    <rect x="14" y="4" width="4" height="16"></rect>
+                </svg>
+                Stop
+            `;
+            trackerStartBtn.classList.add('running');
+            trackerPauseBtn.disabled = false;
+
+            if (timeTracker.isPaused) {
+                trackerDisplay.classList.remove('running');
+                trackerDisplay.classList.add('paused');
+                trackerPauseBtn.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                    </svg>
+                    Weiter
+                `;
+                trackerPauseBtn.classList.add('paused');
+            } else {
+                trackerDisplay.classList.add('running');
+                trackerDisplay.classList.remove('paused');
+                trackerPauseBtn.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="6" y="4" width="4" height="16"></rect>
+                        <rect x="14" y="4" width="4" height="16"></rect>
+                    </svg>
+                    Pause
+                `;
+                trackerPauseBtn.classList.remove('paused');
+            }
+        } else {
+            trackerStartBtn.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+                Start
+            `;
+            trackerStartBtn.classList.remove('running');
+            trackerPauseBtn.disabled = true;
+            trackerPauseBtn.classList.remove('paused');
+            trackerDisplay.classList.remove('running', 'paused');
+            trackerPauseBtn.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="6" y="4" width="4" height="16"></rect>
+                    <rect x="14" y="4" width="4" height="16"></rect>
+                </svg>
+                Pause
+            `;
+        }
+    }
+
+    function formatTrackerTime(ms) {
+        const totalSeconds = Math.floor(ms / 1000);
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+        return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+
+    function openWorktimeModal() {
+        renderWorktimeEntries();
+        worktimeModal.classList.remove('hidden');
+        requestAnimationFrame(() => {
+            worktimeModal.classList.add('visible');
+        });
+    }
+
+    function closeWorktimeModal() {
+        worktimeModal.classList.remove('visible');
+        setTimeout(() => {
+            worktimeModal.classList.add('hidden');
+        }, 300);
+    }
+
+    function renderWorktimeEntries() {
+        // Calculate summary
+        const totalDuration = workTimeSessions.reduce((sum, s) => sum + s.duration, 0);
+        const sessionCount = workTimeSessions.length;
+
+        worktimeSummaryEl.innerHTML = `
+            <div class="summary-item">
+                <div class="summary-label">Gesamt</div>
+                <div class="summary-value">${formatTrackerTime(totalDuration)}</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-label">Sessions</div>
+                <div class="summary-value">${sessionCount}</div>
+            </div>
+        `;
+
+        if (workTimeSessions.length === 0) {
+            worktimeEntriesEl.innerHTML = `
+                <div class="worktime-empty">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                    <div>Noch keine Arbeitszeiten erfasst</div>
+                </div>
+            `;
+            return;
+        }
+
+        let html = '';
+        workTimeSessions.forEach((session, index) => {
+            const startDate = new Date(session.startTime);
+            const endDate = new Date(session.endTime);
+            const dateStr = startDate.toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit', year: '2-digit' });
+            const startTimeStr = startDate.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+            const endTimeStr = endDate.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+
+            html += `
+                <div class="worktime-entry" data-index="${index}">
+                    <div class="worktime-entry-info">
+                        <div class="worktime-entry-date">${dateStr}</div>
+                        <div class="worktime-entry-times">${startTimeStr} - ${endTimeStr}</div>
+                    </div>
+                    <div class="worktime-entry-duration">${formatTrackerTime(session.duration)}</div>
+                    <button class="worktime-entry-delete" data-id="${session.id}">
+                        ${icons.trash}
+                    </button>
+                </div>
+            `;
+        });
+        worktimeEntriesEl.innerHTML = html;
+
+        // Add delete listeners
+        worktimeEntriesEl.querySelectorAll('.worktime-entry-delete').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const id = btn.dataset.id;
+                workTimeSessions = workTimeSessions.filter(s => s.id !== id);
+                saveData();
+                renderWorktimeEntries();
+                showToast('Eintrag gelöscht', 'info');
+            });
+        });
+    }
+
+    function clearAllWorktime() {
+        if (workTimeSessions.length === 0) return;
+        workTimeSessions = [];
+        saveData();
+        renderWorktimeEntries();
+        showToast('Alle Einträge gelöscht', 'info');
+    }
+
+    // ============ EXPORT FUNCTIONS ============
+
+    function exportDoneTasks() {
+        const doneTasks = tasks.filter(t => t.status === 'done');
+
+        if (doneTasks.length === 0) {
+            showToast('Keine erledigten Aufgaben zum Exportieren', 'info');
+            return;
+        }
+
+        let markdown = '# Erledigte Aufgaben\n\n';
+
+        doneTasks.forEach(task => {
+            // Find when it was moved to done
+            let doneTimestamp = null;
+            let inProgressDuration = null;
+
+            if (task.history && task.history.length > 0) {
+                // Find the done entry
+                for (let i = task.history.length - 1; i >= 0; i--) {
+                    if (task.history[i].status === 'done') {
+                        doneTimestamp = task.history[i].timestamp;
+                        break;
+                    }
+                }
+
+                // Calculate time in progress
+                let inProgressStart = null;
+                let inProgressEnd = null;
+                for (let i = 0; i < task.history.length; i++) {
+                    if (task.history[i].status === 'in-progress' && !inProgressStart) {
+                        inProgressStart = task.history[i].timestamp;
+                    }
+                    if (task.history[i].status === 'done' && inProgressStart) {
+                        inProgressEnd = task.history[i].timestamp;
+                        break;
+                    }
+                }
+
+                if (inProgressStart && inProgressEnd) {
+                    inProgressDuration = Math.floor((inProgressEnd - inProgressStart) / 60000);
+                }
+            }
+
+            const doneDate = doneTimestamp
+                ? new Date(doneTimestamp).toLocaleString('de-DE', {
+                    day: '2-digit', month: '2-digit', year: '2-digit',
+                    hour: '2-digit', minute: '2-digit'
+                })
+                : 'Unbekannt';
+
+            const durationStr = inProgressDuration !== null
+                ? formatDuration(inProgressDuration)
+                : '-';
+
+            markdown += `- ${task.content}, Bearbeitungszeit: ${durationStr} - Abgeschlossen: ${doneDate}\n`;
+        });
+
+        copyToClipboard(markdown);
+        showToast(`${doneTasks.length} Aufgaben als Markdown kopiert!`, 'success');
+    }
+
     // ============ EVENT LISTENERS ============
 
     function setupEventListeners() {
         // Add task button
         addTaskBtn.addEventListener('click', openAddModal);
 
+        // Export done tasks button
+        const exportDoneBtn = document.getElementById('export-done-btn');
+        exportDoneBtn.addEventListener('click', exportDoneTasks);
+
         // Modal close
         closeBtn.addEventListener('click', closeModal);
         modal.addEventListener('click', (e) => {
             if (e.target === modal) closeModal();
+        });
+
+        // Info Modal
+        infoCloseBtn.addEventListener('click', closeInfoModal);
+        infoModal.addEventListener('click', (e) => {
+            if (e.target === infoModal) closeInfoModal();
+        });
+        saveInfoBtn.addEventListener('click', saveInfo);
+        clearInfoBtn.addEventListener('click', clearInfo);
+        infoInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && e.shiftKey) {
+                e.preventDefault();
+                saveInfo();
+            }
         });
 
         // Priority selection
@@ -603,6 +1062,14 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
+        // Task input: Shift+Enter to save
+        taskInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && e.shiftKey) {
+                e.preventDefault();
+                saveTaskBtn.click();
+            }
+        });
+
         // Image upload button
         imageUploadBtn.addEventListener('click', () => {
             imageInput.click();
@@ -668,14 +1135,46 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
-                closeModal();
+            if (e.key === 'Escape') {
+                if (!modal.classList.contains('hidden')) {
+                    closeModal();
+                } else if (!infoModal.classList.contains('hidden')) {
+                    closeInfoModal();
+                } else if (!worktimeModal.classList.contains('hidden')) {
+                    closeWorktimeModal();
+                }
             }
             if (e.key === 'n' && e.ctrlKey) {
                 e.preventDefault();
                 openAddModal();
             }
         });
+
+        // Time Tracker Event Listeners
+        trackerStartBtn.addEventListener('click', () => {
+            if (timeTracker.isRunning) {
+                stopTracker();
+            } else {
+                startTracker();
+            }
+        });
+
+        trackerPauseBtn.addEventListener('click', () => {
+            if (timeTracker.isPaused) {
+                resumeTracker();
+            } else {
+                pauseTracker();
+            }
+        });
+
+        trackerLogBtn.addEventListener('click', openWorktimeModal);
+
+        // Worktime Modal Events
+        worktimeCloseBtn.addEventListener('click', closeWorktimeModal);
+        worktimeModal.addEventListener('click', (e) => {
+            if (e.target === worktimeModal) closeWorktimeModal();
+        });
+        clearWorktimeBtn.addEventListener('click', clearAllWorktime);
 
         // Drag and drop tasks
         setupDragAndDrop();

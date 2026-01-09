@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Dashboard & Zwischenablage",
-  "version": "2.2",
+  "version": "2.9",
   "description": "Dein persönliches Dashboard mit Kanban-Board und Zwischenablage für schnelles Speichern von Texten und Bildern.",
   "action": {
     "default_title": "Dashboard öffnen",
