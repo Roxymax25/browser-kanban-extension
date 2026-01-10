@@ -534,6 +534,35 @@
         </div>
     </div>
 
+    <!-- Confirmation Modal -->
+    <div id="confirm-modal" class="modal hidden">
+        <div class="modal-content confirm-modal-content">
+            <span class="close-btn confirm-close-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </span>
+            <h2 id="confirm-modal-title">
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                Bestätigen
+            </h2>
+            <div class="confirm-message-container">
+                <p id="confirm-modal-message">Sind Sie sicher?</p>
+            </div>
+            <div class="modal-actions">
+                <button id="confirm-cancel-btn" class="secondary-btn">Abbrechen</button>
+                <button id="confirm-ok-btn" class="danger-btn">Löschen</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast Benachrichtigung -->
     <div class="toast" id="toast">
         <span class="toast-icon"></span>

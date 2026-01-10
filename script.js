@@ -103,6 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let selectedPalette = 'sunset-orange';
     let selectedLanguage = 'de';
     let selectedTheme = 'dark';
+    let confirmResolve = null;
 
     // Translations
     const translations = {
@@ -1078,6 +1079,47 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Confirm Modal Functions
+    function showConfirmModal(title, message, okText, cancelText) {
+        return new Promise((resolve) => {
+            confirmResolve = resolve;
+            document.getElementById('confirm-modal-title').innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                ${title}
+            `;
+            document.getElementById('confirm-modal-message').textContent = message;
+
+            const okBtn = document.getElementById('confirm-ok-btn');
+            const cancelBtn = document.getElementById('confirm-cancel-btn');
+
+            okBtn.textContent = okText || t('delete');
+            cancelBtn.textContent = cancelText || t('cancel');
+
+            const modal = document.getElementById('confirm-modal');
+            modal.classList.remove('hidden');
+            requestAnimationFrame(() => {
+                modal.classList.add('visible');
+            });
+        });
+    }
+
+    function closeConfirmModal() {
+        const modal = document.getElementById('confirm-modal');
+        modal.classList.remove('visible');
+        setTimeout(() => {
+            modal.classList.add('hidden');
+        }, 300);
+        if (confirmResolve) {
+            confirmResolve(false); // Resolve false if closed without choice
+            confirmResolve = null;
+        }
+    }
+
     // ============ SETTINGS FUNCTIONS ============
 
     function loadSettings() {
@@ -1631,9 +1673,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const noteInput = noteEl.querySelector('.note-input');
             const sessionId = noteEl.dataset.id;
 
-            // Click on note to edit
-            noteDisplay.addEventListener('click', (e) => {
+            // Click on note container to edit (anywhere in the box)
+            noteEl.addEventListener('click', (e) => {
                 e.stopPropagation();
+
+                // If already editing, don't do anything (let the input handle interaction)
+                if (!noteInput.classList.contains('hidden')) return;
+
                 noteDisplay.classList.add('hidden');
                 noteInput.classList.remove('hidden');
                 noteInput.focus();
@@ -1848,10 +1894,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ============ CLEAR CLIPBOARD FUNCTION ============
 
-    function clearAllClipboard() {
+    async function clearAllClipboard() {
         if (clipboardItems.length === 0) return;
 
-        if (confirm(t('confirmClearClipboard'))) {
+        const confirmed = await showConfirmModal(
+            t('deleteAll'),
+            t('confirmClearClipboard'),
+            t('deleteAll'),
+            t('cancel')
+        );
+
+        if (confirmed) {
             clipboardItems = [];
             saveData();
             renderClipboardItems();
@@ -1995,6 +2048,34 @@ document.addEventListener('DOMContentLoaded', () => {
         closeBtn.addEventListener('click', closeModal);
         modal.addEventListener('click', (e) => {
             if (e.target === modal) closeModal();
+        });
+
+        // Confirm Modal
+        const confirmModal = document.getElementById('confirm-modal');
+        const confirmOkBtn = document.getElementById('confirm-ok-btn');
+        const confirmCancelBtn = document.getElementById('confirm-cancel-btn');
+        const confirmCloseBtnElem = document.querySelector('.confirm-close-btn');
+
+        confirmOkBtn.addEventListener('click', () => {
+            if (confirmResolve) confirmResolve(true);
+            closeConfirmModal();
+        });
+
+        confirmCancelBtn.addEventListener('click', () => {
+            if (confirmResolve) confirmResolve(false);
+            closeConfirmModal();
+        });
+
+        confirmCloseBtnElem.addEventListener('click', () => {
+            if (confirmResolve) confirmResolve(false);
+            closeConfirmModal();
+        });
+
+        confirmModal.addEventListener('click', (e) => {
+            if (e.target === confirmModal) {
+                if (confirmResolve) confirmResolve(false);
+                closeConfirmModal();
+            }
         });
 
         // Info Modal
