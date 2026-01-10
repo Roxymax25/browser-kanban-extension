@@ -33,6 +33,9 @@
     --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.6);
     --shadow-glow: 0 0 40px rgba(232, 93, 4, 0.2);
 
+    /* Logo Filter */
+    --logo-filter: hue-rotate(0deg);
+
     --transition-fast: 0.15s ease;
     --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-slow: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
@@ -165,6 +168,17 @@ body::before {
     animation: slideDown 0.5s var(--transition-normal);
 }
 
+.header-center {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+}
+
 @keyframes slideDown {
     from {
         opacity: 0;
@@ -199,6 +213,8 @@ body::before {
     height: 100%;
     object-fit: cover;
     border-radius: var(--border-radius-md);
+    filter: var(--logo-filter);
+    transition: filter var(--transition-normal);
 }
 
 h1 {
@@ -1565,4 +1581,156 @@ textarea#task-input::placeholder {
 
 .tracker-display.paused .tracker-time {
     color: var(--progress-color);
+}
+
+/* Settings Button */
+.settings-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--border-radius-md);
+    background: var(--bg-tertiary);
+    border: 1px solid var(--glass-border);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    transition: all var(--transition-normal);
+}
+
+.settings-btn:hover {
+    background: var(--accent-gradient);
+    color: white;
+    border-color: transparent;
+    transform: rotate(45deg);
+    box-shadow: var(--shadow-glow);
+}
+
+.settings-btn:active {
+    transform: rotate(45deg) scale(0.95);
+}
+
+.settings-btn svg {
+    transition: transform var(--transition-normal);
+}
+
+/* Settings Modal */
+.settings-modal-content {
+    width: 560px;
+    max-width: 95vw;
+}
+
+.settings-modal-content h2 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.settings-modal-content h2 svg {
+    color: var(--accent-1);
+}
+
+/* Palette Grid */
+.palette-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+.palette-option {
+    background: var(--bg-primary);
+    border: 2px solid var(--glass-border);
+    border-radius: var(--border-radius-md);
+    padding: 14px;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.palette-option:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+.palette-option.selected {
+    border-color: var(--accent-1);
+    background: var(--accent-soft);
+    box-shadow: 0 0 20px rgba(232, 93, 4, 0.2);
+}
+
+.palette-preview {
+    display: flex;
+    gap: 6px;
+    height: 32px;
+}
+
+.palette-color {
+    flex: 1;
+    border-radius: 6px;
+    transition: transform var(--transition-fast);
+}
+
+.palette-option:hover .palette-color {
+    transform: scaleY(1.1);
+}
+
+.palette-name {
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    text-align: center;
+}
+
+/* Secondary Button */
+.secondary-btn {
+    background: var(--bg-primary);
+    color: var(--text-secondary);
+    border: 1px solid var(--glass-border);
+    padding: 11px 22px;
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 0.9rem;
+    transition: all var(--transition-normal);
+}
+
+.secondary-btn:hover {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Language Selector */
+.language-selector {
+    display: flex;
+    gap: 12px;
+}
+
+.language-option {
+    flex: 1;
+    background: var(--bg-primary);
+    border: 2px solid var(--glass-border);
+    border-radius: var(--border-radius-md);
+    padding: 14px;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    text-align: center;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.language-option:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+    color: var(--text-primary);
+}
+
+.language-option.selected {
+    border-color: var(--accent-1);
+    background: var(--accent-soft);
+    box-shadow: 0 0 20px rgba(232, 93, 4, 0.2);
+    color: var(--text-primary);
 }

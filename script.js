@@ -65,6 +65,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const saveInfoBtn = document.getElementById('save-info-btn');
     const clearInfoBtn = document.getElementById('clear-info-btn');
 
+    // DOM Elements - Settings Modal
+    const settingsBtn = document.getElementById('settings-btn');
+    const settingsModal = document.getElementById('settings-modal');
+    const settingsCloseBtn = document.querySelector('.settings-close-btn');
+    const saveSettingsBtn = document.getElementById('save-settings-btn');
+    const cancelSettingsBtn = document.getElementById('cancel-settings-btn');
+    const paletteGrid = document.getElementById('palette-grid');
+    const paletteOptions = paletteGrid.querySelectorAll('.palette-option');
+
     // State
     let tasks = [];
     let clipboardItems = [];
@@ -84,11 +93,343 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     let trackerInterval = null;
 
+    // Settings State
+    let selectedPalette = 'sunset-orange';
+    let selectedLanguage = 'de';
+
+    // Translations
+    const translations = {
+        de: {
+            // Header
+            dashboardTitle: 'Mein Dashboard',
+            tasks: 'Aufgaben',
+
+            // Columns
+            todo: 'Zu erledigen',
+            inProgress: 'In Bearbeitung',
+            done: 'Erledigt',
+            noTasks: 'Keine Aufgaben',
+
+            // Clipboard
+            clipboard: 'Zwischenablage',
+            clipboardEmpty: 'Zwischenablage leer',
+            clipboardPasteHint: 'Strg+V zum Einfügen',
+            saveText: 'Text speichern',
+            image: 'Bild',
+            copy: 'Kopieren',
+            task: 'Aufgabe',
+            clipboardPlaceholder: 'Text hier einfügen oder tippen...\nStrg+V zum schnellen Einfügen\nBilder per Drag & Drop',
+
+            // Task Modal
+            newTask: 'Neue Aufgabe',
+            editTask: 'Aufgabe bearbeiten',
+            description: 'Beschreibung',
+            taskPlaceholder: 'Was muss erledigt werden?\nShift+Enter zum Speichern',
+            priority: 'Priorität',
+            low: 'Niedrig',
+            medium: 'Mittel',
+            high: 'Hoch',
+            statusHistory: 'Status-Verlauf',
+            save: 'Speichern',
+            delete: 'Löschen',
+            cancel: 'Abbrechen',
+
+            // Info Modal
+            additionalInfo: 'Zusätzliche Info',
+            noteOrInfo: 'Notiz oder Zusatzinfo',
+            infoPlaceholder: 'Zusätzliche Informationen eingeben...\nShift+Enter zum Speichern',
+
+            // Worktime Modal
+            worktimeLog: 'Arbeitszeit-Log',
+            total: 'Gesamt',
+            sessions: 'Sessions',
+            noWorktimeRecorded: 'Noch keine Arbeitszeiten erfasst',
+            deleteAll: 'Alle löschen',
+
+            // Settings Modal
+            settings: 'Einstellungen',
+            language: 'Sprache / Language',
+            colorPalette: 'Farbpalette wählen',
+
+            // Time Tracker
+            start: 'Start',
+            pause: 'Pause',
+            stop: 'Stop',
+            resume: 'Weiter',
+            log: 'Log',
+
+            // Tooltips
+            tooltipNewTask: 'Neue Aufgabe (Strg+N)',
+            tooltipExport: 'Als Markdown exportieren',
+            tooltipCopy: 'In Zwischenablage kopieren',
+            tooltipInfo: 'Zusätzliche Info',
+            tooltipDelete: 'Löschen',
+            tooltipSettings: 'Einstellungen',
+
+            // Toast Messages
+            toastCopied: 'In Zwischenablage kopiert!',
+            toastTaskDeleted: 'Aufgabe gelöscht',
+            toastTaskUpdated: 'Aufgabe aktualisiert',
+            toastTaskAdded: 'Aufgabe hinzugefügt',
+            toastAddedAsTask: 'Als Aufgabe hinzugefügt!',
+            toastDeleted: 'Gelöscht',
+            toastClipboardSaved: 'In Zwischenablage gespeichert',
+            toastSaved: 'Gespeichert',
+            toastImageSaved: 'Bild gespeichert!',
+            toastPastedImageSaved: 'Bild aus Zwischenablage gespeichert!',
+            toastSelectImage: 'Bitte wähle eine Bilddatei',
+            toastImageTooLarge: 'Bild zu groß (max. 2MB)',
+            toastImageOpenedNewTab: 'Bild in neuem Tab geöffnet',
+            toastEnterDescription: 'Bitte gib eine Beschreibung ein',
+            toastInfoSaved: 'Info gespeichert',
+            toastInfoRemoved: 'Info entfernt',
+            toastInfoDeleted: 'Info gelöscht',
+            toastTrackerStarted: 'Zeiterfassung gestartet',
+            toastTrackerPaused: 'Zeiterfassung pausiert',
+            toastTrackerResumed: 'Zeiterfassung fortgesetzt',
+            toastWorktimeSaved: 'Arbeitszeit gespeichert:',
+            toastEntryDeleted: 'Eintrag gelöscht',
+            toastAllEntriesDeleted: 'Alle Einträge gelöscht',
+            toastNoDoneTasks: 'Keine erledigten Aufgaben zum Exportieren',
+            toastExported: 'Aufgaben als Markdown kopiert!',
+            toastTextSaved: 'Text gespeichert!',
+            toastMovedTo: 'Verschoben nach',
+            toastPaletteSaved: 'Farbpalette gespeichert!',
+            toastSettingsSaved: 'Einstellungen gespeichert!',
+
+            // Duration
+            min: 'Min.',
+            hours: 'Std.',
+            days: 'Tag(e)',
+
+            // Export
+            completedTasks: 'Erledigte Aufgaben',
+            processingTime: 'Bearbeitungszeit',
+            completedAt: 'Abgeschlossen',
+            unknown: 'Unbekannt'
+        },
+        en: {
+            // Header
+            dashboardTitle: 'My Dashboard',
+            tasks: 'Tasks',
+
+            // Columns
+            todo: 'To Do',
+            inProgress: 'In Progress',
+            done: 'Done',
+            noTasks: 'No tasks',
+
+            // Clipboard
+            clipboard: 'Clipboard',
+            clipboardEmpty: 'Clipboard empty',
+            clipboardPasteHint: 'Ctrl+V to paste',
+            saveText: 'Save text',
+            image: 'Image',
+            copy: 'Copy',
+            task: 'Task',
+            clipboardPlaceholder: 'Paste or type text here...\nCtrl+V to quickly paste\nDrag & drop images',
+
+            // Task Modal
+            newTask: 'New Task',
+            editTask: 'Edit Task',
+            description: 'Description',
+            taskPlaceholder: 'What needs to be done?\nShift+Enter to save',
+            priority: 'Priority',
+            low: 'Low',
+            medium: 'Medium',
+            high: 'High',
+            statusHistory: 'Status History',
+            save: 'Save',
+            delete: 'Delete',
+            cancel: 'Cancel',
+
+            // Info Modal
+            additionalInfo: 'Additional Info',
+            noteOrInfo: 'Note or additional info',
+            infoPlaceholder: 'Enter additional information...\nShift+Enter to save',
+
+            // Worktime Modal
+            worktimeLog: 'Work Time Log',
+            total: 'Total',
+            sessions: 'Sessions',
+            noWorktimeRecorded: 'No work time recorded yet',
+            deleteAll: 'Delete all',
+
+            // Settings Modal
+            settings: 'Settings',
+            language: 'Language / Sprache',
+            colorPalette: 'Choose color palette',
+
+            // Time Tracker
+            start: 'Start',
+            pause: 'Pause',
+            stop: 'Stop',
+            resume: 'Resume',
+            log: 'Log',
+
+            // Tooltips
+            tooltipNewTask: 'New Task (Ctrl+N)',
+            tooltipExport: 'Export as Markdown',
+            tooltipCopy: 'Copy to clipboard',
+            tooltipInfo: 'Additional info',
+            tooltipDelete: 'Delete',
+            tooltipSettings: 'Settings',
+
+            // Toast Messages
+            toastCopied: 'Copied to clipboard!',
+            toastTaskDeleted: 'Task deleted',
+            toastTaskUpdated: 'Task updated',
+            toastTaskAdded: 'Task added',
+            toastAddedAsTask: 'Added as task!',
+            toastDeleted: 'Deleted',
+            toastClipboardSaved: 'Saved to clipboard',
+            toastSaved: 'Saved',
+            toastImageSaved: 'Image saved!',
+            toastPastedImageSaved: 'Image from clipboard saved!',
+            toastSelectImage: 'Please select an image file',
+            toastImageTooLarge: 'Image too large (max. 2MB)',
+            toastImageOpenedNewTab: 'Image opened in new tab',
+            toastEnterDescription: 'Please enter a description',
+            toastInfoSaved: 'Info saved',
+            toastInfoRemoved: 'Info removed',
+            toastInfoDeleted: 'Info deleted',
+            toastTrackerStarted: 'Time tracking started',
+            toastTrackerPaused: 'Time tracking paused',
+            toastTrackerResumed: 'Time tracking resumed',
+            toastWorktimeSaved: 'Work time saved:',
+            toastEntryDeleted: 'Entry deleted',
+            toastAllEntriesDeleted: 'All entries deleted',
+            toastNoDoneTasks: 'No completed tasks to export',
+            toastExported: 'Tasks copied as Markdown!',
+            toastTextSaved: 'Text saved!',
+            toastMovedTo: 'Moved to',
+            toastPaletteSaved: 'Color palette saved!',
+            toastSettingsSaved: 'Settings saved!',
+
+            // Duration
+            min: 'min',
+            hours: 'hrs',
+            days: 'day(s)',
+
+            // Export
+            completedTasks: 'Completed Tasks',
+            processingTime: 'Processing time',
+            completedAt: 'Completed',
+            unknown: 'Unknown'
+        }
+    };
+
+    // Get translation helper
+    function t(key) {
+        return translations[selectedLanguage][key] || translations['de'][key] || key;
+    }
+
+    // Color Palettes Definition
+    const colorPalettes = {
+        'sunset-orange': {
+            name: 'Sunset Orange',
+            accent1: '#e85d04',
+            accent2: '#dc2f02',
+            accent3: '#f48c06',
+            accentSoft: 'rgba(232, 93, 4, 0.15)',
+            accentGradient: 'linear-gradient(135deg, #e85d04 0%, #dc2f02 100%)',
+            todoColor: '#dc2f02',
+            progressColor: '#f48c06',
+            doneColor: '#38b000',
+            clipboardColor: '#e85d04',
+            shadowGlow: '0 0 40px rgba(232, 93, 4, 0.2)',
+            scrollbarThumb: 'rgba(232, 93, 4, 0.4)',
+            scrollbarHover: 'rgba(232, 93, 4, 0.6)',
+            logoFilter: 'hue-rotate(0deg)'
+        },
+        'ocean-blue': {
+            name: 'Ocean Blue',
+            accent1: '#0077b6',
+            accent2: '#0096c7',
+            accent3: '#00b4d8',
+            accentSoft: 'rgba(0, 119, 182, 0.15)',
+            accentGradient: 'linear-gradient(135deg, #0077b6 0%, #0096c7 100%)',
+            todoColor: '#0077b6',
+            progressColor: '#00b4d8',
+            doneColor: '#38b000',
+            clipboardColor: '#0096c7',
+            shadowGlow: '0 0 40px rgba(0, 119, 182, 0.2)',
+            scrollbarThumb: 'rgba(0, 119, 182, 0.4)',
+            scrollbarHover: 'rgba(0, 119, 182, 0.6)',
+            logoFilter: 'hue-rotate(180deg)'
+        },
+        'forest-green': {
+            name: 'Forest Green',
+            accent1: '#2d6a4f',
+            accent2: '#40916c',
+            accent3: '#52b788',
+            accentSoft: 'rgba(45, 106, 79, 0.15)',
+            accentGradient: 'linear-gradient(135deg, #2d6a4f 0%, #40916c 100%)',
+            todoColor: '#2d6a4f',
+            progressColor: '#52b788',
+            doneColor: '#74c69d',
+            clipboardColor: '#40916c',
+            shadowGlow: '0 0 40px rgba(45, 106, 79, 0.2)',
+            scrollbarThumb: 'rgba(45, 106, 79, 0.4)',
+            scrollbarHover: 'rgba(45, 106, 79, 0.6)',
+            logoFilter: 'hue-rotate(120deg)'
+        },
+        'royal-purple': {
+            name: 'Royal Purple',
+            accent1: '#7b2cbf',
+            accent2: '#9d4edd',
+            accent3: '#c77dff',
+            accentSoft: 'rgba(123, 44, 191, 0.15)',
+            accentGradient: 'linear-gradient(135deg, #7b2cbf 0%, #9d4edd 100%)',
+            todoColor: '#9d4edd',
+            progressColor: '#c77dff',
+            doneColor: '#38b000',
+            clipboardColor: '#7b2cbf',
+            shadowGlow: '0 0 40px rgba(123, 44, 191, 0.2)',
+            scrollbarThumb: 'rgba(123, 44, 191, 0.4)',
+            scrollbarHover: 'rgba(123, 44, 191, 0.6)',
+            logoFilter: 'hue-rotate(270deg)'
+        },
+        'cherry-blossom': {
+            name: 'Cherry Blossom',
+            accent1: '#ff758f',
+            accent2: '#ff4d6d',
+            accent3: '#ffb3c1',
+            accentSoft: 'rgba(255, 117, 143, 0.15)',
+            accentGradient: 'linear-gradient(135deg, #ff758f 0%, #ff4d6d 100%)',
+            todoColor: '#ff4d6d',
+            progressColor: '#ffb3c1',
+            doneColor: '#38b000',
+            clipboardColor: '#ff758f',
+            shadowGlow: '0 0 40px rgba(255, 117, 143, 0.2)',
+            scrollbarThumb: 'rgba(255, 117, 143, 0.4)',
+            scrollbarHover: 'rgba(255, 117, 143, 0.6)',
+            logoFilter: 'hue-rotate(330deg)'
+        },
+        'midnight-gold': {
+            name: 'Midnight Gold',
+            accent1: '#fca311',
+            accent2: '#e5a000',
+            accent3: '#ffbe0b',
+            accentSoft: 'rgba(252, 163, 17, 0.15)',
+            accentGradient: 'linear-gradient(135deg, #fca311 0%, #e5a000 100%)',
+            todoColor: '#e5a000',
+            progressColor: '#ffbe0b',
+            doneColor: '#38b000',
+            clipboardColor: '#fca311',
+            shadowGlow: '0 0 40px rgba(252, 163, 17, 0.2)',
+            scrollbarThumb: 'rgba(252, 163, 17, 0.4)',
+            scrollbarHover: 'rgba(252, 163, 17, 0.6)',
+            logoFilter: 'hue-rotate(30deg)'
+        }
+    };
+
     // Initialize
     init();
 
     function init() {
         loadData();
+        loadSettings();
         updateDateTime();
         setInterval(updateDateTime, 1000);
         setInterval(renderTasks, 60000);
@@ -128,9 +469,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateDateTime() {
         const now = new Date();
+        const locale = selectedLanguage === 'en' ? 'en-GB' : 'de-DE';
         const options = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
-        currentDateEl.textContent = now.toLocaleDateString('de-DE', options);
-        currentTimeEl.textContent = now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+        currentDateEl.textContent = now.toLocaleDateString(locale, options);
+        currentTimeEl.textContent = now.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
     }
 
     function updateStats() {
@@ -146,7 +488,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function formatDateTime(timestamp) {
         const date = new Date(timestamp);
-        return date.toLocaleDateString('de-DE', {
+        const locale = selectedLanguage === 'en' ? 'en-GB' : 'de-DE';
+        return date.toLocaleDateString(locale, {
             day: '2-digit',
             month: '2-digit',
             year: '2-digit',
@@ -157,7 +500,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function formatDate(timestamp) {
         const date = new Date(timestamp);
-        return date.toLocaleDateString('de-DE', {
+        const locale = selectedLanguage === 'en' ? 'en-GB' : 'de-DE';
+        return date.toLocaleDateString(locale, {
             day: '2-digit',
             month: '2-digit',
             hour: '2-digit',
@@ -167,9 +511,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function getStatusLabel(status) {
         const labels = {
-            'todo': 'Zu erledigen',
-            'in-progress': 'In Bearbeitung',
-            'done': 'Erledigt'
+            'todo': t('todo'),
+            'in-progress': t('inProgress'),
+            'done': t('done')
         };
         return labels[status] || status;
     }
@@ -199,15 +543,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function formatDuration(minutes) {
         if (minutes < 60) {
-            return `${minutes} Min.`;
+            return `${minutes} ${t('min')}`;
         } else if (minutes < 1440) {
             const hours = Math.floor(minutes / 60);
             const mins = minutes % 60;
-            return mins > 0 ? `${hours} Std. ${mins} Min.` : `${hours} Std.`;
+            return mins > 0 ? `${hours} ${t('hours')} ${mins} ${t('min')}` : `${hours} ${t('hours')}`;
         } else {
             const days = Math.floor(minutes / 1440);
             const hours = Math.floor((minutes % 1440) / 60);
-            return hours > 0 ? `${days} Tag(e) ${hours} Std.` : `${days} Tag(e)`;
+            return hours > 0 ? `${days} ${t('days')} ${hours} ${t('hours')}` : `${days} ${t('days')}`;
         }
     }
 
@@ -238,7 +582,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 emptyState.className = 'empty-state';
                 emptyState.innerHTML = `
                     <div class="empty-state-icon">${icons.file}</div>
-                    <div class="empty-state-text">Keine Aufgaben</div>
+                    <div class="empty-state-text">${t('noTasks')}</div>
                 `;
                 list.appendChild(emptyState);
             }
@@ -310,7 +654,7 @@ document.addEventListener('DOMContentLoaded', () => {
         div.querySelector('.copy-btn').addEventListener('click', (e) => {
             e.stopPropagation();
             copyToClipboard(task.content);
-            showToast('In Zwischenablage kopiert!', 'success');
+            showToast(t('toastCopied'), 'success');
         });
 
         // Delete button
@@ -319,7 +663,7 @@ document.addEventListener('DOMContentLoaded', () => {
             tasks = tasks.filter(t => t.id !== task.id);
             saveData();
             renderTasks();
-            showToast('Aufgabe gelöscht', 'info');
+            showToast(t('toastTaskDeleted'), 'info');
         });
 
         // Info button
@@ -333,9 +677,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function getPriorityLabel(priority) {
         const labels = {
-            low: 'Niedrig',
-            medium: 'Mittel',
-            high: 'Hoch'
+            low: t('low'),
+            medium: t('medium'),
+            high: t('high')
         };
         return labels[priority] || labels.medium;
     }
@@ -355,7 +699,7 @@ document.addEventListener('DOMContentLoaded', () => {
             clipboardItemsContainer.innerHTML = `
                 <div class="empty-state">
                     <div class="empty-state-icon">${icons.clip}</div>
-                    <div class="empty-state-text">Zwischenablage leer<br><small>Strg+V zum Einfügen</small></div>
+                    <div class="empty-state-text">${t('clipboardEmpty')}<br><small>${t('clipboardPasteHint')}</small></div>
                 </div>
             `;
             return;
@@ -367,7 +711,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             let contentHtml = '';
             if (item.type === 'image') {
-                contentHtml = `<img src="${item.content}" class="clipboard-image" alt="Bild"/>`;
+                contentHtml = `<img src="${item.content}" class="clipboard-image" alt="${t('image')}"/>`;
             } else {
                 contentHtml = `<div class="clipboard-item-content">${escapeHtml(item.content)}</div>`;
             }
@@ -376,8 +720,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 ${contentHtml}
                 <div class="clipboard-item-meta">${icons.calendar} ${formatDateTime(item.createdAt || Date.now())}</div>
                 <div class="clipboard-item-actions">
-                    <button class="clipboard-item-btn copy">${icons.copy} Kopieren</button>
-                    ${item.type !== 'image' ? `<button class="clipboard-item-btn task">${icons.filePlus} Aufgabe</button>` : ''}
+                    <button class="clipboard-item-btn copy">${icons.copy} ${t('copy')}</button>
+                    ${item.type !== 'image' ? `<button class="clipboard-item-btn task">${icons.filePlus} ${t('task')}</button>` : ''}
                     <button class="clipboard-item-btn delete">${icons.trash}</button>
                 </div>
             `;
@@ -389,7 +733,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     copyToClipboard(item.content);
                 }
-                showToast('Kopiert!', 'success');
+                showToast(t('toastCopied'), 'success');
             });
 
             // Add as task button (only for text)
@@ -407,7 +751,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     tasks.push(newTask);
                     saveData();
                     renderTasks();
-                    showToast('Als Aufgabe hinzugefügt!', 'success');
+                    showToast(t('toastAddedAsTask'), 'success');
                 });
             }
 
@@ -416,7 +760,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 clipboardItems.splice(index, 1);
                 saveData();
                 renderClipboardItems();
-                showToast('Gelöscht', 'info');
+                showToast(t('toastDeleted'), 'info');
             });
 
             // Click to copy
@@ -427,7 +771,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     copyToClipboard(item.content);
                 }
-                showToast('Kopiert!', 'success');
+                showToast(t('toastCopied'), 'success');
             });
 
             clipboardItemsContainer.appendChild(itemEl);
@@ -474,39 +818,39 @@ document.addEventListener('DOMContentLoaded', () => {
             ]);
         } catch (err) {
             window.open(dataUrl, '_blank');
-            showToast('Bild in neuem Tab geöffnet', 'info');
+            showToast(t('toastImageOpenedNewTab'), 'info');
         }
     }
 
     function handleImageUpload(file) {
         if (!file || !file.type.startsWith('image/')) {
-            showToast('Bitte wähle eine Bilddatei', 'error');
+            showToast(t('toastSelectImage'), 'error');
             return;
         }
 
         if (file.size > 2 * 1024 * 1024) {
-            showToast('Bild zu groß (max. 2MB)', 'error');
+            showToast(t('toastImageTooLarge'), 'error');
             return;
         }
 
         const reader = new FileReader();
         reader.onload = (e) => {
             addClipboardItem(e.target.result, 'image');
-            showToast('Bild gespeichert!', 'success');
+            showToast(t('toastImageSaved'), 'success');
         };
         reader.readAsDataURL(file);
     }
 
     function handleImageFromBlob(blob) {
         if (blob.size > 2 * 1024 * 1024) {
-            showToast('Bild zu groß (max. 2MB)', 'error');
+            showToast(t('toastImageTooLarge'), 'error');
             return;
         }
 
         const reader = new FileReader();
         reader.onload = (e) => {
             addClipboardItem(e.target.result, 'image');
-            showToast('Bild aus Zwischenablage gespeichert!', 'success');
+            showToast(t('toastPastedImageSaved'), 'success');
         };
         reader.readAsDataURL(blob);
     }
@@ -516,7 +860,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function openAddModal() {
         editingTaskId = null;
         taskInput.value = '';
-        modalTitle.textContent = 'Neue Aufgabe';
+        modalTitle.textContent = t('newTask');
         deleteTaskBtn.classList.add('hidden');
         taskHistorySection.classList.add('hidden');
         selectedPriority = 'medium';
@@ -531,7 +875,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function openEditModal(task) {
         editingTaskId = task.id;
         taskInput.value = task.content;
-        modalTitle.textContent = 'Aufgabe bearbeiten';
+        modalTitle.textContent = t('editTask');
         deleteTaskBtn.classList.remove('hidden');
         selectedPriority = task.priority || 'medium';
         updatePrioritySelection();
@@ -602,7 +946,7 @@ document.addEventListener('DOMContentLoaded', () => {
             task.additionalInfo = infoInput.value.trim();
             saveData();
             renderTasks();
-            showToast(task.additionalInfo ? 'Info gespeichert' : 'Info entfernt', 'success');
+            showToast(task.additionalInfo ? t('toastInfoSaved') : t('toastInfoRemoved'), 'success');
         }
         closeInfoModal();
     }
@@ -614,7 +958,7 @@ document.addEventListener('DOMContentLoaded', () => {
             task.additionalInfo = '';
             saveData();
             renderTasks();
-            showToast('Info gelöscht', 'info');
+            showToast(t('toastInfoDeleted'), 'info');
         }
         closeInfoModal();
     }
@@ -626,6 +970,194 @@ document.addEventListener('DOMContentLoaded', () => {
                 opt.classList.add('selected');
             }
         });
+    }
+
+    // ============ SETTINGS FUNCTIONS ============
+
+    function loadSettings() {
+        chrome.storage.local.get(['selectedPalette', 'selectedLanguage'], (result) => {
+            if (result.selectedPalette && colorPalettes[result.selectedPalette]) {
+                selectedPalette = result.selectedPalette;
+                applyColorPalette(selectedPalette);
+                updatePaletteSelection();
+            }
+            if (result.selectedLanguage && translations[result.selectedLanguage]) {
+                selectedLanguage = result.selectedLanguage;
+            }
+            // Always apply translations and update UI
+            updateLanguageSelection();
+            applyTranslations();
+            updateDateTime();
+        });
+    }
+
+    function saveSettingsData() {
+        chrome.storage.local.set({
+            selectedPalette: selectedPalette,
+            selectedLanguage: selectedLanguage
+        });
+    }
+
+    function openSettingsModal() {
+        updatePaletteSelection();
+        updateLanguageSelection();
+        settingsModal.classList.remove('hidden');
+        requestAnimationFrame(() => {
+            settingsModal.classList.add('visible');
+        });
+    }
+
+    function closeSettingsModal() {
+        settingsModal.classList.remove('visible');
+        setTimeout(() => {
+            settingsModal.classList.add('hidden');
+        }, 300);
+    }
+
+    function updatePaletteSelection() {
+        paletteOptions.forEach(opt => {
+            opt.classList.remove('selected');
+            if (opt.dataset.palette === selectedPalette) {
+                opt.classList.add('selected');
+            }
+        });
+    }
+
+    function updateLanguageSelection() {
+        const languageOptions = document.querySelectorAll('.language-option');
+        languageOptions.forEach(opt => {
+            opt.classList.remove('selected');
+            if (opt.dataset.lang === selectedLanguage) {
+                opt.classList.add('selected');
+            }
+        });
+    }
+
+    function applyTranslations() {
+        // Update document title
+        document.title = t('dashboardTitle');
+
+        // Header
+        document.querySelector('h1').textContent = t('dashboardTitle');
+
+        // Tasks label in header
+        const tasksLabel = document.getElementById('tasks-label');
+        if (tasksLabel) tasksLabel.textContent = t('tasks');
+
+        // Column headers
+        document.querySelector('#todo .column-title h2').textContent = t('todo');
+        document.querySelector('#in-progress .column-title h2').textContent = t('inProgress');
+        document.querySelector('#done .column-title h2').textContent = t('done');
+
+        // Tooltips
+        document.getElementById('add-task-btn').title = t('tooltipNewTask');
+        document.getElementById('export-done-btn').title = t('tooltipExport');
+        document.getElementById('settings-btn').title = t('tooltipSettings');
+
+        // Clipboard panel
+        document.querySelector('.clipboard-header h3').textContent = t('clipboard');
+        document.querySelector('.clipboard-input').placeholder = t('clipboardPlaceholder');
+
+        // Clipboard buttons
+        const clipboardBtns = document.querySelectorAll('.clipboard-buttons .clipboard-btn');
+        if (clipboardBtns[0]) {
+            clipboardBtns[0].innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="17" x2="12" y2="3"></line>
+                    <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                </svg>
+                ${t('saveText')}
+            `;
+        }
+        if (clipboardBtns[1]) {
+            clipboardBtns[1].innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                    <polyline points="21 15 16 10 5 21"></polyline>
+                </svg>
+                ${t('image')}
+            `;
+        }
+
+        // Time tracker buttons
+        if (!timeTracker.isRunning) {
+            trackerStartBtn.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+                ${t('start')}
+            `;
+        }
+        trackerLogBtn.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+            </svg>
+            ${t('log')}
+        `;
+
+        // Settings modal
+        document.querySelector('#settings-modal h2').innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+            ${t('settings')}
+        `;
+
+        // Settings form labels
+        const settingsLabels = document.querySelectorAll('#settings-modal .form-label');
+        if (settingsLabels[0]) settingsLabels[0].textContent = t('language');
+        if (settingsLabels[1]) settingsLabels[1].textContent = t('colorPalette');
+
+        // Settings buttons
+        document.getElementById('cancel-settings-btn').textContent = t('cancel');
+        document.getElementById('save-settings-btn').innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                <polyline points="7 3 7 8 15 8"></polyline>
+            </svg>
+            ${t('save')}
+        `;
+
+        // Re-render dynamic content
+        renderTasks();
+        renderClipboardItems();
+    }
+
+    function applyColorPalette(paletteName) {
+        const palette = colorPalettes[paletteName];
+        if (!palette) return;
+
+        const root = document.documentElement;
+
+        // Update CSS custom properties
+        root.style.setProperty('--accent-gradient', palette.accentGradient);
+        root.style.setProperty('--accent-1', palette.accent1);
+        root.style.setProperty('--accent-2', palette.accent2);
+        root.style.setProperty('--accent-3', palette.accent3);
+        root.style.setProperty('--accent-soft', palette.accentSoft);
+
+        root.style.setProperty('--todo-color', palette.todoColor);
+        root.style.setProperty('--progress-color', palette.progressColor);
+        root.style.setProperty('--done-color', palette.doneColor);
+        root.style.setProperty('--clipboard-color', palette.clipboardColor);
+
+        root.style.setProperty('--shadow-glow', palette.shadowGlow);
+
+        // Update logo filter
+        root.style.setProperty('--logo-filter', palette.logoFilter);
     }
 
     // ============ TOAST FUNCTIONS ============
@@ -671,7 +1203,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateTrackerUI();
         trackerInterval = setInterval(updateTrackerDisplay, 1000);
         saveData();
-        showToast('Zeiterfassung gestartet', 'success');
+        showToast(t('toastTrackerStarted'), 'success');
     }
 
     function stopTracker() {
@@ -703,7 +1235,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateTrackerUI();
         trackerTimeEl.textContent = '00:00:00';
         saveData();
-        showToast(`Arbeitszeit gespeichert: ${formatTrackerTime(duration)}`, 'success');
+        showToast(`${t('toastWorktimeSaved')} ${formatTrackerTime(duration)}`, 'success');
     }
 
     function pauseTracker() {
@@ -717,7 +1249,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         updateTrackerUI();
         saveData();
-        showToast('Zeiterfassung pausiert', 'info');
+        showToast(t('toastTrackerPaused'), 'info');
     }
 
     function resumeTracker() {
@@ -731,7 +1263,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         updateTrackerUI();
         saveData();
-        showToast('Zeiterfassung fortgesetzt', 'success');
+        showToast(t('toastTrackerResumed'), 'success');
     }
 
     function updateTrackerDisplay() {
@@ -835,11 +1367,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         worktimeSummaryEl.innerHTML = `
             <div class="summary-item">
-                <div class="summary-label">Gesamt</div>
+                <div class="summary-label">${t('total')}</div>
                 <div class="summary-value">${formatTrackerTime(totalDuration)}</div>
             </div>
             <div class="summary-item">
-                <div class="summary-label">Sessions</div>
+                <div class="summary-label">${t('sessions')}</div>
                 <div class="summary-value">${sessionCount}</div>
             </div>
         `;
@@ -852,7 +1384,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <circle cx="12" cy="12" r="10"></circle>
                         <polyline points="12 6 12 12 16 14"></polyline>
                     </svg>
-                    <div>Noch keine Arbeitszeiten erfasst</div>
+                    <div>${t('noWorktimeRecorded')}</div>
                 </div>
             `;
             return;
@@ -862,9 +1394,10 @@ document.addEventListener('DOMContentLoaded', () => {
         workTimeSessions.forEach((session, index) => {
             const startDate = new Date(session.startTime);
             const endDate = new Date(session.endTime);
-            const dateStr = startDate.toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit', year: '2-digit' });
-            const startTimeStr = startDate.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-            const endTimeStr = endDate.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+            const locale = selectedLanguage === 'en' ? 'en-GB' : 'de-DE';
+            const dateStr = startDate.toLocaleDateString(locale, { weekday: 'short', day: '2-digit', month: '2-digit', year: '2-digit' });
+            const startTimeStr = startDate.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
+            const endTimeStr = endDate.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
 
             html += `
                 <div class="worktime-entry" data-index="${index}">
@@ -889,7 +1422,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 workTimeSessions = workTimeSessions.filter(s => s.id !== id);
                 saveData();
                 renderWorktimeEntries();
-                showToast('Eintrag gelöscht', 'info');
+                showToast(t('toastEntryDeleted'), 'info');
             });
         });
     }
@@ -899,7 +1432,7 @@ document.addEventListener('DOMContentLoaded', () => {
         workTimeSessions = [];
         saveData();
         renderWorktimeEntries();
-        showToast('Alle Einträge gelöscht', 'info');
+        showToast(t('toastAllEntriesDeleted'), 'info');
     }
 
     // ============ EXPORT FUNCTIONS ============
@@ -908,11 +1441,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const doneTasks = tasks.filter(t => t.status === 'done');
 
         if (doneTasks.length === 0) {
-            showToast('Keine erledigten Aufgaben zum Exportieren', 'info');
+            showToast(t('toastNoDoneTasks'), 'info');
             return;
         }
 
-        let markdown = '# Erledigte Aufgaben\n\n';
+        let markdown = `# ${t('completedTasks')}\n\n`;
 
         doneTasks.forEach(task => {
             // Find when it was moved to done
@@ -946,22 +1479,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
+            const locale = selectedLanguage === 'en' ? 'en-GB' : 'de-DE';
             const doneDate = doneTimestamp
-                ? new Date(doneTimestamp).toLocaleString('de-DE', {
+                ? new Date(doneTimestamp).toLocaleString(locale, {
                     day: '2-digit', month: '2-digit', year: '2-digit',
                     hour: '2-digit', minute: '2-digit'
                 })
-                : 'Unbekannt';
+                : t('unknown');
 
             const durationStr = inProgressDuration !== null
                 ? formatDuration(inProgressDuration)
                 : '-';
 
-            markdown += `- ${task.content}, Bearbeitungszeit: ${durationStr} - Abgeschlossen: ${doneDate}\n`;
+            markdown += `- ${task.content}, ${t('processingTime')}: ${durationStr} - ${t('completedAt')}: ${doneDate}\n`;
         });
 
         copyToClipboard(markdown);
-        showToast(`${doneTasks.length} Aufgaben als Markdown kopiert!`, 'success');
+        showToast(`${doneTasks.length} ${t('toastExported')}`, 'success');
     }
 
     // ============ EVENT LISTENERS ============
@@ -1006,7 +1540,7 @@ document.addEventListener('DOMContentLoaded', () => {
         saveTaskBtn.addEventListener('click', () => {
             const content = taskInput.value.trim();
             if (!content) {
-                showToast('Bitte gib eine Beschreibung ein', 'error');
+                showToast(t('toastEnterDescription'), 'error');
                 return;
             }
 
@@ -1016,7 +1550,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     task.content = content;
                     task.priority = selectedPriority;
                 }
-                showToast('Aufgabe aktualisiert', 'success');
+                showToast(t('toastTaskUpdated'), 'success');
             } else {
                 const newTask = {
                     id: Date.now().toString(),
@@ -1027,7 +1561,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     history: []
                 };
                 tasks.push(newTask);
-                showToast('Aufgabe hinzugefügt', 'success');
+                showToast(t('toastTaskAdded'), 'success');
             }
 
             saveData();
@@ -1042,7 +1576,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 saveData();
                 renderTasks();
                 closeModal();
-                showToast('Aufgabe gelöscht', 'info');
+                showToast(t('toastTaskDeleted'), 'info');
             }
         });
 
@@ -1050,7 +1584,7 @@ document.addEventListener('DOMContentLoaded', () => {
         addClipboardBtn.addEventListener('click', () => {
             addClipboardItem(clipboardInput.value, 'text');
             clipboardInput.value = '';
-            showToast('In Zwischenablage gespeichert', 'success');
+            showToast(t('toastClipboardSaved'), 'success');
         });
 
         // Clipboard paste shortcut in textarea
@@ -1058,7 +1592,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (e.key === 'Enter' && e.ctrlKey) {
                 addClipboardItem(clipboardInput.value, 'text');
                 clipboardInput.value = '';
-                showToast('Gespeichert', 'success');
+                showToast(t('toastSaved'), 'success');
             }
         });
 
@@ -1107,7 +1641,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const text = e.clipboardData.getData('text');
                 if (text.trim()) {
                     addClipboardItem(text, 'text');
-                    showToast('Text gespeichert!', 'success');
+                    showToast(t('toastTextSaved'), 'success');
                 }
             }
         });
@@ -1142,6 +1676,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     closeInfoModal();
                 } else if (!worktimeModal.classList.contains('hidden')) {
                     closeWorktimeModal();
+                } else if (!settingsModal.classList.contains('hidden')) {
+                    closeSettingsModal();
                 }
             }
             if (e.key === 'n' && e.ctrlKey) {
@@ -1175,6 +1711,43 @@ document.addEventListener('DOMContentLoaded', () => {
             if (e.target === worktimeModal) closeWorktimeModal();
         });
         clearWorktimeBtn.addEventListener('click', clearAllWorktime);
+
+        // Settings Modal Events
+        settingsBtn.addEventListener('click', openSettingsModal);
+        settingsCloseBtn.addEventListener('click', closeSettingsModal);
+        settingsModal.addEventListener('click', (e) => {
+            if (e.target === settingsModal) closeSettingsModal();
+        });
+        cancelSettingsBtn.addEventListener('click', closeSettingsModal);
+
+        // Palette selection
+        paletteOptions.forEach(opt => {
+            opt.addEventListener('click', () => {
+                selectedPalette = opt.dataset.palette;
+                updatePaletteSelection();
+                // Preview the palette immediately
+                applyColorPalette(selectedPalette);
+            });
+        });
+
+        // Language selection
+        const languageOptions = document.querySelectorAll('.language-option');
+        languageOptions.forEach(opt => {
+            opt.addEventListener('click', () => {
+                selectedLanguage = opt.dataset.lang;
+                updateLanguageSelection();
+                // Preview the language immediately
+                applyTranslations();
+                updateDateTime();
+            });
+        });
+
+        // Save settings
+        saveSettingsBtn.addEventListener('click', () => {
+            saveSettingsData();
+            closeSettingsModal();
+            showToast(t('toastSettingsSaved'), 'success');
+        });
 
         // Drag and drop tasks
         setupDragAndDrop();
@@ -1226,7 +1799,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     saveData();
                     renderTasks();
 
-                    showToast(`Verschoben nach "${getStatusLabel(newStatus)}"`, 'success');
+                    showToast(`${t('toastMovedTo')} "${getStatusLabel(newStatus)}"`, 'success');
                 }
             });
         });
