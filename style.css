@@ -1888,6 +1888,57 @@ textarea#task-input::placeholder {
     color: var(--text-muted);
 }
 
+/* Archive Filters */
+.archive-filters {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.archive-filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.archive-filter-label {
+    font-size: 0.72rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.archive-filter-options {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.archive-filter-btn {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-sm);
+    padding: 6px 12px;
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.archive-filter-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-primary);
+}
+
+.archive-filter-btn.active {
+    background: var(--accent-gradient);
+    border-color: var(--accent-1);
+    color: white;
+}
+
 .archive-logs-entries {
     flex: 1;
     overflow-y: auto;

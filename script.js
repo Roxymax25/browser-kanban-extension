@@ -85,6 +85,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let editingInfoTaskId = null;
     let selectedPriority = 'medium';
     let archivedTaskLogs = [];
+    let archivePriorityFilter = 'all';
+    let archiveTimeFilter = 'all';
 
     // Time Tracker State
     let workTimeSessions = [];
@@ -223,7 +225,7 @@ document.addEventListener('DOMContentLoaded', () => {
             unknown: 'Unbekannt',
 
             // Archive & Logs
-            tooltipArchive: 'Erledigte Tasks archivieren',
+            tooltipArchive: 'Klick: Tasks archivieren | Doppelklick/Rechtsklick: Archiv-Logs öffnen',
             tooltipViewLogs: 'Archiv-Logs anzeigen',
             archiveLogs: 'Archiv-Logs',
             searchPlaceholder: 'Suchen...',
@@ -232,6 +234,17 @@ document.addEventListener('DOMContentLoaded', () => {
             toastNoDoneTasksToArchive: 'Keine erledigten Tasks zum Archivieren',
             toastClipboardCleared: 'Zwischenablage geleert',
             confirmClearClipboard: 'Wirklich alle Einträge löschen?',
+
+            // Archive Filters
+            filterPriority: 'Priorität',
+            filterTime: 'Zeitraum',
+            filterAll: 'Alle',
+            filterHigh: 'Hoch',
+            filterMedium: 'Mittel',
+            filterLow: 'Niedrig',
+            filterToday: 'Heute',
+            filterWeek: '7 Tage',
+            filterMonth: '30 Tage',
 
             // Pin
             tooltipPin: 'Anpinnen',
@@ -361,7 +374,7 @@ document.addEventListener('DOMContentLoaded', () => {
             unknown: 'Unknown',
 
             // Archive & Logs
-            tooltipArchive: 'Archive completed tasks',
+            tooltipArchive: 'Click: Archive tasks | Double-click/Right-click: Open archive logs',
             tooltipViewLogs: 'View archive logs',
             archiveLogs: 'Archive Logs',
             searchPlaceholder: 'Search...',
@@ -370,6 +383,17 @@ document.addEventListener('DOMContentLoaded', () => {
             toastNoDoneTasksToArchive: 'No completed tasks to archive',
             toastClipboardCleared: 'Clipboard cleared',
             confirmClearClipboard: 'Really delete all entries?',
+
+            // Archive Filters
+            filterPriority: 'Priority',
+            filterTime: 'Time Period',
+            filterAll: 'All',
+            filterHigh: 'High',
+            filterMedium: 'Medium',
+            filterLow: 'Low',
+            filterToday: 'Today',
+            filterWeek: '7 Days',
+            filterMonth: '30 Days',
 
             // Pin
             tooltipPin: 'Pin task',
@@ -1163,7 +1187,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('settings-btn').title = t('tooltipSettings');
         document.getElementById('clear-clipboard-btn').title = t('tooltipClearClipboard');
 
-        // Archive logs modal
         document.querySelector('#archive-logs-modal h2').innerHTML = `
             <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1174,6 +1197,32 @@ document.addEventListener('DOMContentLoaded', () => {
             ${t('archiveLogs')}
         `;
         document.getElementById('archive-search-input').placeholder = t('searchPlaceholder');
+
+        // Archive filter labels and buttons
+        const priorityLabel = document.querySelector('#archive-priority-filter').closest('.archive-filter-group').querySelector('.archive-filter-label');
+        if (priorityLabel) priorityLabel.textContent = t('filterPriority');
+        const timeLabel = document.querySelector('#archive-time-filter').closest('.archive-filter-group').querySelector('.archive-filter-label');
+        if (timeLabel) timeLabel.textContent = t('filterTime');
+
+        // Priority filter buttons
+        const priorityBtns = document.querySelectorAll('#archive-priority-filter .archive-filter-btn');
+        priorityBtns.forEach(btn => {
+            const priority = btn.dataset.priority;
+            if (priority === 'all') btn.textContent = t('filterAll');
+            else if (priority === 'high') btn.textContent = t('filterHigh');
+            else if (priority === 'medium') btn.textContent = t('filterMedium');
+            else if (priority === 'low') btn.textContent = t('filterLow');
+        });
+
+        // Time filter buttons
+        const timeBtns = document.querySelectorAll('#archive-time-filter .archive-filter-btn');
+        timeBtns.forEach(btn => {
+            const time = btn.dataset.time;
+            if (time === 'all') btn.textContent = t('filterAll');
+            else if (time === 'today') btn.textContent = t('filterToday');
+            else if (time === 'week') btn.textContent = t('filterWeek');
+            else if (time === 'month') btn.textContent = t('filterMonth');
+        });
 
         // Worktime modal
         document.querySelector('#worktime-modal h2').innerHTML = `
@@ -1665,6 +1714,21 @@ document.addEventListener('DOMContentLoaded', () => {
         const archiveLogsModal = document.getElementById('archive-logs-modal');
         const archiveSearchInput = document.getElementById('archive-search-input');
 
+        // Reset filters
+        archivePriorityFilter = 'all';
+        archiveTimeFilter = 'all';
+
+        // Reset filter UI
+        document.querySelectorAll('.archive-filter-btn').forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.dataset.priority === 'all' || btn.dataset.time === 'all') {
+                btn.classList.add('active');
+            }
+        });
+
+        // Reset search
+        archiveSearchInput.value = '';
+
         renderArchiveLogs('');
         archiveLogsModal.classList.remove('hidden');
         requestAnimationFrame(() => {
@@ -1706,11 +1770,35 @@ document.addEventListener('DOMContentLoaded', () => {
         const archiveLogsEntriesEl = document.getElementById('archive-logs-entries');
         archiveLogsEntriesEl.innerHTML = '';
 
-        // Filter by fuzzy search
-        const filteredLogs = archivedTaskLogs.filter(log =>
-            fuzzyMatch(searchQuery, log.content) ||
-            fuzzyMatch(searchQuery, log.additionalInfo || '')
-        );
+        // Get current filter values
+        const now = Date.now();
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+        const weekAgo = now - (7 * 24 * 60 * 60 * 1000);
+        const monthAgo = now - (30 * 24 * 60 * 60 * 1000);
+
+        // Filter by fuzzy search, priority, and time
+        const filteredLogs = archivedTaskLogs.filter(log => {
+            // Fuzzy search filter
+            const matchesSearch = fuzzyMatch(searchQuery, log.content) ||
+                fuzzyMatch(searchQuery, log.additionalInfo || '');
+
+            // Priority filter
+            const matchesPriority = archivePriorityFilter === 'all' ||
+                (log.priority || 'medium') === archivePriorityFilter;
+
+            // Time filter
+            let matchesTime = true;
+            if (archiveTimeFilter === 'today') {
+                matchesTime = log.archivedAt >= todayStart.getTime();
+            } else if (archiveTimeFilter === 'week') {
+                matchesTime = log.archivedAt >= weekAgo;
+            } else if (archiveTimeFilter === 'month') {
+                matchesTime = log.archivedAt >= monthAgo;
+            }
+
+            return matchesSearch && matchesPriority && matchesTime;
+        });
 
         if (filteredLogs.length === 0) {
             archiveLogsEntriesEl.innerHTML = `
@@ -1866,6 +1954,28 @@ document.addEventListener('DOMContentLoaded', () => {
         // Fuzzy search input
         archiveSearchInput.addEventListener('input', (e) => {
             renderArchiveLogs(e.target.value);
+        });
+
+        // Priority filter buttons
+        const priorityFilterBtns = document.querySelectorAll('#archive-priority-filter .archive-filter-btn');
+        priorityFilterBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                priorityFilterBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                archivePriorityFilter = btn.dataset.priority;
+                renderArchiveLogs(archiveSearchInput.value);
+            });
+        });
+
+        // Time filter buttons
+        const timeFilterBtns = document.querySelectorAll('#archive-time-filter .archive-filter-btn');
+        timeFilterBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                timeFilterBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                archiveTimeFilter = btn.dataset.time;
+                renderArchiveLogs(archiveSearchInput.value);
+            });
         });
 
         // Double-click on archive button opens logs (single click archives)

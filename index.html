@@ -149,7 +149,8 @@
                                 <line x1="12" y1="15" x2="12" y2="3"></line>
                             </svg>
                         </button>
-                        <button id="archive-done-btn" class="export-column-btn" title="Erledigte Tasks archivieren">
+                        <button id="archive-done-btn" class="export-column-btn"
+                            title="Klick: Tasks archivieren | Doppelklick/Rechtsklick: Archiv-Logs öffnen">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
                                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                 stroke-linejoin="round">
@@ -508,6 +509,26 @@
             </h2>
             <div class="archive-search-container">
                 <input type="text" id="archive-search-input" class="archive-search-input" placeholder="Suchen...">
+            </div>
+            <div class="archive-filters">
+                <div class="archive-filter-group">
+                    <label class="archive-filter-label" data-i18n="filterPriority">Priorität</label>
+                    <div class="archive-filter-options" id="archive-priority-filter">
+                        <button class="archive-filter-btn active" data-priority="all">Alle</button>
+                        <button class="archive-filter-btn" data-priority="high">Hoch</button>
+                        <button class="archive-filter-btn" data-priority="medium">Mittel</button>
+                        <button class="archive-filter-btn" data-priority="low">Niedrig</button>
+                    </div>
+                </div>
+                <div class="archive-filter-group">
+                    <label class="archive-filter-label" data-i18n="filterTime">Zeitraum</label>
+                    <div class="archive-filter-options" id="archive-time-filter">
+                        <button class="archive-filter-btn active" data-time="all">Alle</button>
+                        <button class="archive-filter-btn" data-time="today">Heute</button>
+                        <button class="archive-filter-btn" data-time="week">7 Tage</button>
+                        <button class="archive-filter-btn" data-time="month">30 Tage</button>
+                    </div>
+                </div>
             </div>
             <div class="archive-logs-entries" id="archive-logs-entries"></div>
         </div>
