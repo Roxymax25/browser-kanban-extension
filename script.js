@@ -11,7 +11,10 @@ document.addEventListener('DOMContentLoaded', () => {
         filePlus: '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>',
         check: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>',
         x: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>',
-        info: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>'
+        info: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>',
+        pin: '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"></line><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"></path></svg>',
+        archive: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="5" rx="2"></rect><path d="M4 9v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9"></path><path d="M10 13h4"></path></svg>',
+        search: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>'
     };
 
     // DOM Elements - Tasks
@@ -81,6 +84,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let editingTaskId = null;
     let editingInfoTaskId = null;
     let selectedPriority = 'medium';
+    let archivedTaskLogs = [];
 
     // Time Tracker State
     let workTimeSessions = [];
@@ -96,6 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Settings State
     let selectedPalette = 'sunset-orange';
     let selectedLanguage = 'de';
+    let selectedTheme = 'dark';
 
     // Translations
     const translations = {
@@ -145,6 +150,10 @@ document.addEventListener('DOMContentLoaded', () => {
             sessions: 'Sessions',
             noWorktimeRecorded: 'Noch keine Arbeitszeiten erfasst',
             deleteAll: 'Alle löschen',
+            sessionNote: 'Notiz',
+            sessionNotePlaceholder: 'Notiz hinzufügen...',
+            noNote: 'Keine Notiz',
+            toastNoteSaved: 'Notiz gespeichert',
 
             // Settings Modal
             settings: 'Einstellungen',
@@ -165,6 +174,11 @@ document.addEventListener('DOMContentLoaded', () => {
             tooltipInfo: 'Zusätzliche Info',
             tooltipDelete: 'Löschen',
             tooltipSettings: 'Einstellungen',
+
+            // Theme
+            themeLabel: 'Theme / Modus',
+            themeDark: 'Dark',
+            themeLight: 'Light',
 
             // Toast Messages
             toastCopied: 'In Zwischenablage kopiert!',
@@ -206,7 +220,27 @@ document.addEventListener('DOMContentLoaded', () => {
             completedTasks: 'Erledigte Aufgaben',
             processingTime: 'Bearbeitungszeit',
             completedAt: 'Abgeschlossen',
-            unknown: 'Unbekannt'
+            unknown: 'Unbekannt',
+
+            // Archive & Logs
+            tooltipArchive: 'Erledigte Tasks archivieren',
+            tooltipViewLogs: 'Archiv-Logs anzeigen',
+            archiveLogs: 'Archiv-Logs',
+            searchPlaceholder: 'Suchen...',
+            noArchivedLogs: 'Keine archivierten Logs',
+            toastArchived: 'Tasks archiviert',
+            toastNoDoneTasksToArchive: 'Keine erledigten Tasks zum Archivieren',
+            toastClipboardCleared: 'Zwischenablage geleert',
+            confirmClearClipboard: 'Wirklich alle Einträge löschen?',
+
+            // Pin
+            tooltipPin: 'Anpinnen',
+            tooltipUnpin: 'Pin lösen',
+            toastPinned: 'Task angepinnt',
+            toastUnpinned: 'Pin gelöst',
+
+            // Clear Clipboard
+            tooltipClearClipboard: 'Zwischenablage leeren'
         },
         en: {
             // Header
@@ -254,6 +288,10 @@ document.addEventListener('DOMContentLoaded', () => {
             sessions: 'Sessions',
             noWorktimeRecorded: 'No work time recorded yet',
             deleteAll: 'Delete all',
+            sessionNote: 'Note',
+            sessionNotePlaceholder: 'Add a note...',
+            noNote: 'No note',
+            toastNoteSaved: 'Note saved',
 
             // Settings Modal
             settings: 'Settings',
@@ -274,6 +312,11 @@ document.addEventListener('DOMContentLoaded', () => {
             tooltipInfo: 'Additional info',
             tooltipDelete: 'Delete',
             tooltipSettings: 'Settings',
+
+            // Theme
+            themeLabel: 'Theme / Mode',
+            themeDark: 'Dark',
+            themeLight: 'Light',
 
             // Toast Messages
             toastCopied: 'Copied to clipboard!',
@@ -315,7 +358,27 @@ document.addEventListener('DOMContentLoaded', () => {
             completedTasks: 'Completed Tasks',
             processingTime: 'Processing time',
             completedAt: 'Completed',
-            unknown: 'Unknown'
+            unknown: 'Unknown',
+
+            // Archive & Logs
+            tooltipArchive: 'Archive completed tasks',
+            tooltipViewLogs: 'View archive logs',
+            archiveLogs: 'Archive Logs',
+            searchPlaceholder: 'Search...',
+            noArchivedLogs: 'No archived logs',
+            toastArchived: 'Tasks archived',
+            toastNoDoneTasksToArchive: 'No completed tasks to archive',
+            toastClipboardCleared: 'Clipboard cleared',
+            confirmClearClipboard: 'Really delete all entries?',
+
+            // Pin
+            tooltipPin: 'Pin task',
+            tooltipUnpin: 'Unpin task',
+            toastPinned: 'Task pinned',
+            toastUnpinned: 'Task unpinned',
+
+            // Clear Clipboard
+            tooltipClearClipboard: 'Clear clipboard'
         }
     };
 
@@ -437,7 +500,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function loadData() {
-        chrome.storage.local.get(['tasks', 'clipboardItems', 'workTimeSessions', 'timeTracker'], (result) => {
+        chrome.storage.local.get(['tasks', 'clipboardItems', 'workTimeSessions', 'timeTracker', 'archivedTaskLogs'], (result) => {
             if (result.tasks) {
                 tasks = result.tasks;
             }
@@ -446,6 +509,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             if (result.workTimeSessions) {
                 workTimeSessions = result.workTimeSessions;
+            }
+            if (result.archivedTaskLogs) {
+                archivedTaskLogs = result.archivedTaskLogs;
             }
             if (result.timeTracker && result.timeTracker.isRunning) {
                 // Restore running timer
@@ -463,7 +529,8 @@ document.addEventListener('DOMContentLoaded', () => {
             tasks: tasks,
             clipboardItems: clipboardItems,
             workTimeSessions: workTimeSessions,
-            timeTracker: timeTracker
+            timeTracker: timeTracker,
+            archivedTaskLogs: archivedTaskLogs
         });
     }
 
@@ -560,9 +627,13 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderTasks() {
         [todoList, inProgressList, doneList].forEach(list => list.innerHTML = '');
 
-        // Sort by priority: high > medium > low
+        // Sort by: pinned first, then priority (high > medium > low)
         const priorityOrder = { high: 0, medium: 1, low: 2 };
         const sortedTasks = [...tasks].sort((a, b) => {
+            // Pinned tasks come first
+            if (a.pinned && !b.pinned) return -1;
+            if (!a.pinned && b.pinned) return 1;
+            // Then sort by priority
             const priorityA = priorityOrder[a.priority] ?? 1;
             const priorityB = priorityOrder[b.priority] ?? 1;
             return priorityA - priorityB;
@@ -594,6 +665,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function createTaskElement(task) {
         const div = document.createElement('div');
         div.classList.add('task-card');
+        if (task.pinned) div.classList.add('pinned');
         div.draggable = true;
         div.dataset.id = task.id;
 
@@ -622,9 +694,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 <div class="task-meta">
                     <div class="task-actions">
-                        <button class="task-action-btn copy-btn" title="In Zwischenablage kopieren">${icons.copy}</button>
-                        <button class="task-action-btn info-btn" title="Zusätzliche Info">${icons.info}</button>
-                        <button class="task-action-btn delete-btn" title="Löschen">${icons.trash}</button>
+                        <button class="task-action-btn pin-btn ${task.pinned ? 'pinned' : ''}" title="${task.pinned ? t('tooltipUnpin') : t('tooltipPin')}">${icons.pin}</button>
+                        <button class="task-action-btn copy-btn" title="${t('tooltipCopy')}">${icons.copy}</button>
+                        <button class="task-action-btn info-btn" title="${t('tooltipInfo')}">${icons.info}</button>
+                        <button class="task-action-btn delete-btn" title="${t('tooltipDelete')}">${icons.trash}</button>
                     </div>
                     <span class="task-priority priority-${task.priority || 'medium'}">${getPriorityLabel(task.priority)}</span>
                 </div>
@@ -670,6 +743,15 @@ document.addEventListener('DOMContentLoaded', () => {
         div.querySelector('.info-btn').addEventListener('click', (e) => {
             e.stopPropagation();
             openInfoModal(task);
+        });
+
+        // Pin button
+        div.querySelector('.pin-btn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            task.pinned = !task.pinned;
+            saveData();
+            renderTasks();
+            showToast(task.pinned ? t('toastPinned') : t('toastUnpinned'), 'success');
         });
 
         return div;
@@ -975,7 +1057,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // ============ SETTINGS FUNCTIONS ============
 
     function loadSettings() {
-        chrome.storage.local.get(['selectedPalette', 'selectedLanguage'], (result) => {
+        chrome.storage.local.get(['selectedPalette', 'selectedLanguage', 'selectedTheme'], (result) => {
             if (result.selectedPalette && colorPalettes[result.selectedPalette]) {
                 selectedPalette = result.selectedPalette;
                 applyColorPalette(selectedPalette);
@@ -984,8 +1066,13 @@ document.addEventListener('DOMContentLoaded', () => {
             if (result.selectedLanguage && translations[result.selectedLanguage]) {
                 selectedLanguage = result.selectedLanguage;
             }
+            if (result.selectedTheme) {
+                selectedTheme = result.selectedTheme;
+                applyTheme(selectedTheme);
+            }
             // Always apply translations and update UI
             updateLanguageSelection();
+            updateThemeSelection();
             applyTranslations();
             updateDateTime();
         });
@@ -994,13 +1081,15 @@ document.addEventListener('DOMContentLoaded', () => {
     function saveSettingsData() {
         chrome.storage.local.set({
             selectedPalette: selectedPalette,
-            selectedLanguage: selectedLanguage
+            selectedLanguage: selectedLanguage,
+            selectedTheme: selectedTheme
         });
     }
 
     function openSettingsModal() {
         updatePaletteSelection();
         updateLanguageSelection();
+        updateThemeSelection();
         settingsModal.classList.remove('hidden');
         requestAnimationFrame(() => {
             settingsModal.classList.add('visible');
@@ -1033,6 +1122,24 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    function updateThemeSelection() {
+        const themeOptions = document.querySelectorAll('.theme-option');
+        themeOptions.forEach(opt => {
+            opt.classList.remove('selected');
+            if (opt.dataset.theme === selectedTheme) {
+                opt.classList.add('selected');
+            }
+        });
+    }
+
+    function applyTheme(theme) {
+        if (theme === 'light') {
+            document.body.classList.add('light-mode');
+        } else {
+            document.body.classList.remove('light-mode');
+        }
+    }
+
     function applyTranslations() {
         // Update document title
         document.title = t('dashboardTitle');
@@ -1052,7 +1159,39 @@ document.addEventListener('DOMContentLoaded', () => {
         // Tooltips
         document.getElementById('add-task-btn').title = t('tooltipNewTask');
         document.getElementById('export-done-btn').title = t('tooltipExport');
+        document.getElementById('archive-done-btn').title = t('tooltipArchive');
         document.getElementById('settings-btn').title = t('tooltipSettings');
+        document.getElementById('clear-clipboard-btn').title = t('tooltipClearClipboard');
+
+        // Archive logs modal
+        document.querySelector('#archive-logs-modal h2').innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="4" width="20" height="5" rx="2"></rect>
+                <path d="M4 9v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9"></path>
+                <path d="M10 13h4"></path>
+            </svg>
+            ${t('archiveLogs')}
+        `;
+        document.getElementById('archive-search-input').placeholder = t('searchPlaceholder');
+
+        // Worktime modal
+        document.querySelector('#worktime-modal h2').innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            ${t('worktimeLog')}
+        `;
+        document.getElementById('clear-worktime-btn').innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+            ${t('deleteAll')}
+        `;
 
         // Clipboard panel
         document.querySelector('.clipboard-header h3').textContent = t('clipboard');
@@ -1398,17 +1537,28 @@ document.addEventListener('DOMContentLoaded', () => {
             const dateStr = startDate.toLocaleDateString(locale, { weekday: 'short', day: '2-digit', month: '2-digit', year: '2-digit' });
             const startTimeStr = startDate.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
             const endTimeStr = endDate.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
+            const noteValue = session.note || '';
+            const noteDisplay = noteValue || t('sessionNotePlaceholder');
+            const noteClass = noteValue ? 'has-note' : 'no-note';
 
             html += `
-                <div class="worktime-entry" data-index="${index}">
-                    <div class="worktime-entry-info">
-                        <div class="worktime-entry-date">${dateStr}</div>
-                        <div class="worktime-entry-times">${startTimeStr} - ${endTimeStr}</div>
+                <div class="worktime-entry" data-index="${index}" data-id="${session.id}">
+                    <div class="worktime-entry-main">
+                        <div class="worktime-entry-info">
+                            <div class="worktime-entry-date">${dateStr}</div>
+                            <div class="worktime-entry-times">${startTimeStr} - ${endTimeStr}</div>
+                        </div>
+                        <div class="worktime-entry-note ${noteClass}" data-id="${session.id}" title="${t('sessionNote')}">
+                            <span class="note-display">${escapeHtml(noteDisplay)}</span>
+                            <input type="text" class="note-input hidden" value="${escapeHtml(noteValue)}" placeholder="${t('sessionNotePlaceholder')}" />
+                        </div>
                     </div>
-                    <div class="worktime-entry-duration">${formatTrackerTime(session.duration)}</div>
-                    <button class="worktime-entry-delete" data-id="${session.id}">
-                        ${icons.trash}
-                    </button>
+                    <div class="worktime-entry-actions">
+                        <div class="worktime-entry-duration">${formatTrackerTime(session.duration)}</div>
+                        <button class="worktime-entry-delete" data-id="${session.id}">
+                            ${icons.trash}
+                        </button>
+                    </div>
                 </div>
             `;
         });
@@ -1425,6 +1575,51 @@ document.addEventListener('DOMContentLoaded', () => {
                 showToast(t('toastEntryDeleted'), 'info');
             });
         });
+
+        // Add note editing listeners
+        worktimeEntriesEl.querySelectorAll('.worktime-entry-note').forEach(noteEl => {
+            const noteDisplay = noteEl.querySelector('.note-display');
+            const noteInput = noteEl.querySelector('.note-input');
+            const sessionId = noteEl.dataset.id;
+
+            // Click on note to edit
+            noteDisplay.addEventListener('click', (e) => {
+                e.stopPropagation();
+                noteDisplay.classList.add('hidden');
+                noteInput.classList.remove('hidden');
+                noteInput.focus();
+                noteInput.select();
+            });
+
+            // Save on blur
+            noteInput.addEventListener('blur', () => {
+                saveSessionNote(sessionId, noteInput.value);
+            });
+
+            // Save on Enter, cancel on Escape
+            noteInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    noteInput.blur();
+                } else if (e.key === 'Escape') {
+                    const session = workTimeSessions.find(s => s.id === sessionId);
+                    noteInput.value = session?.note || '';
+                    noteInput.blur();
+                }
+            });
+        });
+    }
+
+    function saveSessionNote(sessionId, note) {
+        const session = workTimeSessions.find(s => s.id === sessionId);
+        if (session) {
+            session.note = note.trim();
+            saveData();
+            renderWorktimeEntries();
+            if (note.trim()) {
+                showToast(t('toastNoteSaved'), 'success');
+            }
+        }
     }
 
     function clearAllWorktime() {
@@ -1435,7 +1630,149 @@ document.addEventListener('DOMContentLoaded', () => {
         showToast(t('toastAllEntriesDeleted'), 'info');
     }
 
+    // ============ ARCHIVE FUNCTIONS ============
+
+    function archiveDoneTasks() {
+        const doneTasks = tasks.filter(t => t.status === 'done');
+
+        if (doneTasks.length === 0) {
+            showToast(t('toastNoDoneTasksToArchive'), 'info');
+            return;
+        }
+
+        // Archive each done task with its full history
+        doneTasks.forEach(task => {
+            archivedTaskLogs.push({
+                id: task.id,
+                content: task.content,
+                priority: task.priority,
+                additionalInfo: task.additionalInfo || '',
+                createdAt: task.createdAt || parseInt(task.id),
+                archivedAt: Date.now(),
+                history: task.history || []
+            });
+        });
+
+        // Remove done tasks from active tasks
+        tasks = tasks.filter(t => t.status !== 'done');
+
+        saveData();
+        renderTasks();
+        showToast(`${doneTasks.length} ${t('toastArchived')}`, 'success');
+    }
+
+    function openArchiveLogsModal() {
+        const archiveLogsModal = document.getElementById('archive-logs-modal');
+        const archiveSearchInput = document.getElementById('archive-search-input');
+
+        renderArchiveLogs('');
+        archiveLogsModal.classList.remove('hidden');
+        requestAnimationFrame(() => {
+            archiveLogsModal.classList.add('visible');
+        });
+        setTimeout(() => {
+            archiveSearchInput.focus();
+        }, 100);
+    }
+
+    function closeArchiveLogsModal() {
+        const archiveLogsModal = document.getElementById('archive-logs-modal');
+        archiveLogsModal.classList.remove('visible');
+        setTimeout(() => {
+            archiveLogsModal.classList.add('hidden');
+        }, 300);
+    }
+
+    // Fuzzy search like Obsidian - all characters must be present (not in order)
+    function fuzzyMatch(query, text) {
+        if (!query) return true;
+        query = query.toLowerCase();
+        text = text.toLowerCase();
+
+        // Each character in query must exist in text
+        let textCopy = text;
+        for (const char of query) {
+            const index = textCopy.indexOf(char);
+            if (index === -1) {
+                return false;
+            }
+            // Remove found character to handle duplicates
+            textCopy = textCopy.slice(0, index) + textCopy.slice(index + 1);
+        }
+        return true;
+    }
+
+    function renderArchiveLogs(searchQuery) {
+        const archiveLogsEntriesEl = document.getElementById('archive-logs-entries');
+        archiveLogsEntriesEl.innerHTML = '';
+
+        // Filter by fuzzy search
+        const filteredLogs = archivedTaskLogs.filter(log =>
+            fuzzyMatch(searchQuery, log.content) ||
+            fuzzyMatch(searchQuery, log.additionalInfo || '')
+        );
+
+        if (filteredLogs.length === 0) {
+            archiveLogsEntriesEl.innerHTML = `
+                <div class="archive-empty-state">
+                    ${icons.archive}
+                    <div>${t('noArchivedLogs')}</div>
+                </div>
+            `;
+            return;
+        }
+
+        // Sort by archivedAt descending (newest first)
+        const sortedLogs = [...filteredLogs].sort((a, b) => b.archivedAt - a.archivedAt);
+
+        sortedLogs.forEach(log => {
+            const entry = document.createElement('div');
+            entry.className = 'archive-log-entry';
+
+            // Build history HTML
+            let historyHtml = '';
+            if (log.history && log.history.length > 0) {
+                historyHtml = `
+                    <div class="archive-log-history">
+                        <div class="archive-log-history-title">${t('statusHistory')}</div>
+                        ${log.history.map(h => `
+                            <div class="archive-log-history-entry">
+                                ${icons.arrow} ${getStatusLabel(h.status)} - ${formatDateTime(h.timestamp)}
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+
+            entry.innerHTML = `
+                <div class="archive-log-content">${escapeHtml(log.content)}</div>
+                <div class="archive-log-meta">
+                    <span>${icons.calendar} ${t('completedAt')}: ${formatDateTime(log.archivedAt)}</span>
+                    <span class="task-priority priority-${log.priority || 'medium'}">${getPriorityLabel(log.priority)}</span>
+                </div>
+                ${log.additionalInfo ? `<div class="task-additional-info">${icons.info} ${escapeHtml(log.additionalInfo)}</div>` : ''}
+                ${historyHtml}
+            `;
+
+            archiveLogsEntriesEl.appendChild(entry);
+        });
+    }
+
+    // ============ CLEAR CLIPBOARD FUNCTION ============
+
+    function clearAllClipboard() {
+        if (clipboardItems.length === 0) return;
+
+        if (confirm(t('confirmClearClipboard'))) {
+            clipboardItems = [];
+            saveData();
+            renderClipboardItems();
+            showToast(t('toastClipboardCleared'), 'info');
+        }
+    }
+
     // ============ EXPORT FUNCTIONS ============
+
 
     function exportDoneTasks() {
         const doneTasks = tasks.filter(t => t.status === 'done');
@@ -1508,6 +1845,42 @@ document.addEventListener('DOMContentLoaded', () => {
         const exportDoneBtn = document.getElementById('export-done-btn');
         exportDoneBtn.addEventListener('click', exportDoneTasks);
 
+        // Archive done tasks button
+        const archiveDoneBtn = document.getElementById('archive-done-btn');
+        archiveDoneBtn.addEventListener('click', archiveDoneTasks);
+
+        // Clear clipboard button
+        const clearClipboardBtn = document.getElementById('clear-clipboard-btn');
+        clearClipboardBtn.addEventListener('click', clearAllClipboard);
+
+        // Archive logs modal
+        const archiveLogsModal = document.getElementById('archive-logs-modal');
+        const archiveLogsCloseBtn = document.querySelector('.archive-logs-close-btn');
+        const archiveSearchInput = document.getElementById('archive-search-input');
+
+        archiveLogsCloseBtn.addEventListener('click', closeArchiveLogsModal);
+        archiveLogsModal.addEventListener('click', (e) => {
+            if (e.target === archiveLogsModal) closeArchiveLogsModal();
+        });
+
+        // Fuzzy search input
+        archiveSearchInput.addEventListener('input', (e) => {
+            renderArchiveLogs(e.target.value);
+        });
+
+        // Double-click on archive button opens logs (single click archives)
+        archiveDoneBtn.addEventListener('dblclick', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            openArchiveLogsModal();
+        });
+
+        // Right-click on archive button opens logs
+        archiveDoneBtn.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            openArchiveLogsModal();
+        });
+
         // Modal close
         closeBtn.addEventListener('click', closeModal);
         modal.addEventListener('click', (e) => {
@@ -1533,6 +1906,16 @@ document.addEventListener('DOMContentLoaded', () => {
             opt.addEventListener('click', () => {
                 selectedPriority = opt.dataset.priority;
                 updatePrioritySelection();
+            });
+        });
+
+        // Theme selection
+        const themeOptions = document.querySelectorAll('.theme-option');
+        themeOptions.forEach(opt => {
+            opt.addEventListener('click', () => {
+                selectedTheme = opt.dataset.theme;
+                applyTheme(selectedTheme);
+                updateThemeSelection();
             });
         });
 
