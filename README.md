@@ -1,94 +1,104 @@
-# Dashboard & Zwischenablage
+# Dashboard & Clipboard
 
-Eine Chrome Extension für persönliches Aufgaben- und Zwischenablage-Management mit modernem Dark-Theme Design.
+A Chrome Extension for personal task and clipboard management with a modern dark-theme design.
 
-![Version](https://img.shields.io/badge/version-2.9-orange)
+![Version](https://img.shields.io/badge/version-3.0-orange)
 ![Chrome](https://img.shields.io/badge/chrome-extension-green)
 
 ## Features
 
-### Kanban-Board
+### Kanban Board
 
-- **Drei Spalten**: Zu erledigen → In Bearbeitung → Erledigt
-- **Drag & Drop**: Aufgaben einfach zwischen Spalten verschieben
-- **Prioritäten**: Niedrig (grün), Mittel (orange), Hoch (rot)
-- **Automatische Sortierung**: Aufgaben werden nach Priorität sortiert
-- **Zusätzliche Info**: Optionale Notizen zu jeder Aufgabe hinzufügen
-- **Timer**: Zeigt automatisch die Bearbeitungszeit bei aktiven Aufgaben
-- **Status-Verlauf**: Historie aller Statusänderungen im Detail-Modal
+- **Three Columns**: To Do → In Progress → Done
+- **Drag & Drop**: Easily move tasks between columns
+- **Priorities**: Low (green), Medium (orange), High (red)
+- **Auto Sorting**: Tasks are sorted by priority
+- **Additional Info**: Add optional notes to each task
+- **Timer**: Automatically shows processing time for active tasks
+- **Status History**: View history of all status changes in detail modal
 
-### Zwischenablage
+### Clipboard
 
-- **Text speichern**: Texte direkt in die Zwischenablage einfügen
-- **Bilder speichern**: Bilder per Drag & Drop oder Paste hinzufügen
-- **Schnelles Kopieren**: Ein-Klick-Kopieren zurück in die Systemzwischenablage
-- **Aufgabe erstellen**: Direkt aus Zwischenablage-Einträgen neue Aufgaben anlegen
-- **Globales Paste**: `Strg+V` überall im Dashboard speichert automatisch
+- **Save Text**: Insert text directly into the clipboard
+- **Save Images**: Add images via Drag & Drop or Paste
+- **Quick Copy**: One-click copy back to system clipboard
+- **Create Task**: Create new tasks directly from clipboard entries
+- **Global Paste**: `Ctrl+V` anywhere on the dashboard saves automatically
 
-### Arbeitszeittracking
+### Work Time Tracking
 
-- **Start/Stop**: Arbeitssession starten und beenden
-- **Pause/Weiter**: Sessions pausieren ohne zu beenden
-- **Session-Log**: Alle gespeicherten Arbeitszeiten einsehen
-- **Gesamtzeit**: Automatische Berechnung der Gesamtarbeitszeit
-- **Persistenz**: Timer läuft weiter, auch wenn Tab geschlossen wird
+- **Start/Stop**: Start and end work sessions
+- **Pause/Resume**: Pause sessions without ending them
+- **Session Log**: View all saved work times
+- **Total Time**: Automatic calculation of total work time
+- **Persistence**: Timer continues even when tab is closed
+
+### Settings
+
+- **Language**: Switch between German and English
+- **Color Palettes**: Choose from 6 different color themes
 
 ### Export
 
-- **Markdown-Export**: Erledigte Aufgaben als Markdown kopieren
-- Enthält Bearbeitungszeit und Abschlusszeitpunkt
+- **Markdown Export**: Copy completed tasks as Markdown
+- Includes processing time and completion timestamp
 
-## Tastenkürzel
+## Keyboard Shortcuts
 
-| Kürzel | Aktion |
-|--------|--------|
-| `Strg+N` | Neue Aufgabe erstellen |
-| `Shift+Enter` | Aufgabe/Info speichern (im Modal) |
-| `Escape` | Modal schließen |
-| `Strg+V` | Text/Bild in Zwischenablage speichern |
+| Shortcut | Action |
+|----------|--------|
+| `Ctrl+B` | Create new task |
+| `Shift+Enter` | Save task/info (in modal) |
+| `Escape` | Close modal |
+| `Ctrl+V` | Save text/image to clipboard |
 
 ## Design
 
-- **Dark Theme**: Augenfreundliches dunkles Design
-- **Orange Akzente**: Moderne Farbakzente
-- **Glasmorphism**: Subtile Transparenzeffekte
-- **Animationen**: Sanfte Übergänge und Hover-Effekte
-- **Responsive**: Anpassung an verschiedene Fenstergrößen
+- **Dark Theme**: Eye-friendly dark design
+- **Color Accents**: Modern accent colors (6 palettes available)
+- **Glassmorphism**: Subtle transparency effects
+- **Animations**: Smooth transitions and hover effects
+- **Responsive**: Adapts to different window sizes
 
 ## Installation
 
-1. Repository klonen oder als ZIP herunterladen
-2. Chrome öffnen und `chrome://extensions` aufrufen
-3. "Entwicklermodus" aktivieren (oben rechts)
-4. "Entpackte Erweiterung laden" klicken
-5. Projektordner auswählen
+1. Clone repository or download as ZIP
+2. Open Chrome and navigate to `chrome://extensions`
+3. Enable "Developer mode" (top right)
+4. Click "Load unpacked"
+5. Select the project folder
 
-## Verwendung
+## Usage
 
-- **Extension-Icon klicken**: Dashboard öffnet sich in neuem Tab
-- **Erneut klicken**: Springt zum vorhandenen Dashboard-Tab
-- Alle Daten werden automatisch in Chrome gespeichert
+- **Click extension icon**: Dashboard opens in a new tab
+- **Click again**: Focuses the existing dashboard tab
+- All data is automatically saved in Chrome storage
 
-## Dateistruktur
+## File Structure
 
 ```
 ChromePlugin_Notes/
-├── manifest.json      # Extension-Konfiguration
-├── index.html         # Dashboard-Struktur
-├── script.js          # Logik & Funktionen
+├── manifest.json      # Extension configuration
+├── index.html         # Dashboard structure
+├── script.js          # Logic & functions
 ├── style.css          # Styling
-├── background.js      # Tab-Management
-├── icon.png           # Extension-Icon
-└── README.md          # Diese Datei
+├── background.js      # Tab management
+├── icon.png           # Extension icon
+├── PRIVACY.md         # Privacy policy
+└── README.md          # This file
 ```
 
-## Technologien
+## Technologies
 
-- **Vanilla JavaScript** (keine Frameworks)
-- **CSS3** mit Custom Properties
-- **Chrome Storage API** für Datenpersistenz
+- **Vanilla JavaScript** (no frameworks)
+- **CSS3** with Custom Properties
+- **Chrome Storage API** for data persistence
 - **Lucide Icons** (inline SVG)
 
-## Lizenz
+## Privacy
 
-MIT License - Frei verwendbar und anpassbar.
+All data is stored **locally only** on your device using Chrome's Storage API. No data is transmitted to external servers. See [PRIVACY.md](PRIVACY.md) for details.
+
+## License
+
+MIT License - Free to use and modify.

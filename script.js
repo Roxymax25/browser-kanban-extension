@@ -1680,7 +1680,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     closeSettingsModal();
                 }
             }
-            if (e.key === 'n' && e.ctrlKey) {
+            if (e.key === 'b' && e.ctrlKey) {
                 e.preventDefault();
                 openAddModal();
             }
