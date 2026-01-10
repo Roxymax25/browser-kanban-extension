@@ -46,6 +46,29 @@
     --border-radius-xl: 20px;
 }
 
+/* Light Mode Overrides - Avant-Garde Minimalist */
+.light-mode {
+    --bg-primary: #f4f5f7;
+    --bg-secondary: #ffffff;
+    --bg-tertiary: #e9ecef;
+    --bg-card: #ffffff;
+    --glass-bg: rgba(255, 255, 255, 0.85);
+    --glass-border: rgba(0, 0, 0, 0.08);
+
+    --text-primary: #111827;
+    --text-secondary: #4b5563;
+    --text-muted: #9ca3af;
+
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    --shadow-glow: 0 0 20px rgba(var(--accent-1), 0.15);
+    /* Needs hex-to-rgb handling or just soft glow */
+
+    /* Adjust specific elements for light mode contrast */
+    --logo-filter: brightness(0.9);
+}
+
 /* Lucide Icon Sizes */
 [data-lucide] {
     width: 18px;
@@ -2275,4 +2298,102 @@ body.light-mode .modal-content {
 
 body.light-mode .confirm-modal-content h2 {
     color: var(--text-primary);
+}
+
+/* Additional Light Mode Overrides (Avant-Garde) */
+body.light-mode .logo [data-lucide] {
+    color: var(--accent-1);
+}
+
+body.light-mode .task-timestamps {
+    background: rgba(0, 0, 0, 0.04);
+    border-left: 2px solid var(--accent-1);
+}
+
+body.light-mode .task-additional-info {
+    background: rgba(99, 102, 241, 0.08);
+    border-left: 2px solid #6366f1;
+    color: var(--text-secondary);
+}
+
+body.light-mode .task-card:hover {
+    border-color: rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-md);
+}
+
+body.light-mode .clipboard-panel {
+    background: var(--bg-secondary);
+    border-color: var(--glass-border);
+}
+
+.light-mode .column {
+    background: #ebecf0;
+    border-color: transparent;
+}
+
+.light-mode .column-header {
+    background: #ffffff;
+    margin: -18px -18px 16px -18px;
+    padding: 18px 20px;
+    /* Slightly more horizontal padding */
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 16px 16px 0 0;
+    /* Align with column radius */
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    position: relative;
+    z-index: 2;
+}
+
+.light-mode .column h2 {
+    color: #111827;
+    font-weight: 600;
+}
+
+/* Colored Header accents for Light Mode */
+.light-mode #todo .column-header {
+    border-top: 16px solid var(--todo-color);
+    background: rgba(220, 47, 2, 0.04);
+    border-bottom: 2px solid rgba(220, 47, 2, 0.06);
+    box-shadow: inset 0 15px 25px -10px rgba(220, 47, 2, 0.1);
+}
+
+.light-mode #in-progress .column-header {
+    border-top: 16px solid var(--progress-color);
+    background: rgba(244, 140, 6, 0.04);
+    border-bottom: 2px solid rgba(244, 140, 6, 0.06);
+    box-shadow: inset 0 15px 25px -10px rgba(244, 140, 6, 0.1);
+}
+
+.light-mode #done .column-header {
+    border-top: 16px solid var(--done-color);
+    background: rgba(56, 176, 0, 0.04);
+    border-bottom: 2px solid rgba(56, 176, 0, 0.06);
+    box-shadow: inset 0 15px 25px -10px rgba(56, 176, 0, 0.1);
+}
+
+.light-mode #todo .column-header h2 {
+    color: var(--todo-color);
+}
+
+.light-mode #in-progress .column-header h2 {
+    color: var(--progress-color);
+}
+
+.light-mode #done .column-header h2 {
+    color: var(--done-color);
+}
+
+.light-mode #todo .task-count {
+    background: var(--todo-color);
+    color: white;
+}
+
+.light-mode #in-progress .task-count {
+    background: var(--progress-color);
+    color: white;
+}
+
+.light-mode #done .task-count {
+    background: var(--done-color);
+    color: white;
 }

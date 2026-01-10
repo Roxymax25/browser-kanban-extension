@@ -1,21 +1,11 @@
+import { ICONS as icons } from './modules/config/icons.js';
+import { StorageService } from './modules/services/storage.js';
+import { t, setLanguage } from './modules/utils/i18n.js';
+import { formatDateTime, formatDate, formatDuration, fuzzyMatch, escapeHtml } from './modules/utils/helpers.js';
+
 document.addEventListener('DOMContentLoaded', () => {
     // SVG Icon templates
-    const icons = {
-        calendar: '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>',
-        timer: '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>',
-        copy: '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>',
-        trash: '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>',
-        arrow: '<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>',
-        file: '<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>',
-        clip: '<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>',
-        filePlus: '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>',
-        check: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>',
-        x: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>',
-        info: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>',
-        pin: '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"></line><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"></path></svg>',
-        archive: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="5" rx="2"></rect><path d="M4 9v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9"></path><path d="M10 13h4"></path></svg>',
-        search: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>'
-    };
+
 
     // DOM Elements - Tasks
     const todoList = document.querySelector('#todo .task-list');
@@ -105,312 +95,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let selectedTheme = 'dark';
     let confirmResolve = null;
 
-    // Translations
-    const translations = {
-        de: {
-            // Header
-            dashboardTitle: 'Mein Dashboard',
-            tasks: 'Aufgaben',
-
-            // Columns
-            todo: 'Zu erledigen',
-            inProgress: 'In Bearbeitung',
-            done: 'Erledigt',
-            noTasks: 'Keine Aufgaben',
-
-            // Clipboard
-            clipboard: 'Zwischenablage',
-            clipboardEmpty: 'Zwischenablage leer',
-            clipboardPasteHint: 'Strg+V zum Einfügen',
-            saveText: 'Text speichern',
-            image: 'Bild',
-            copy: 'Kopieren',
-            task: 'Aufgabe',
-            clipboardPlaceholder: 'Text hier einfügen oder tippen...\nStrg+V zum schnellen Einfügen\nBilder per Drag & Drop',
-
-            // Task Modal
-            newTask: 'Neue Aufgabe',
-            editTask: 'Aufgabe bearbeiten',
-            description: 'Beschreibung',
-            taskPlaceholder: 'Was muss erledigt werden?\nShift+Enter zum Speichern',
-            priority: 'Priorität',
-            low: 'Niedrig',
-            medium: 'Mittel',
-            high: 'Hoch',
-            statusHistory: 'Status-Verlauf',
-            save: 'Speichern',
-            delete: 'Löschen',
-            cancel: 'Abbrechen',
-
-            // Info Modal
-            additionalInfo: 'Zusätzliche Info',
-            noteOrInfo: 'Notiz oder Zusatzinfo',
-            infoPlaceholder: 'Zusätzliche Informationen eingeben...\nShift+Enter zum Speichern',
-
-            // Worktime Modal
-            worktimeLog: 'Arbeitszeit-Log',
-            total: 'Gesamt',
-            sessions: 'Sessions',
-            noWorktimeRecorded: 'Noch keine Arbeitszeiten erfasst',
-            deleteAll: 'Alle löschen',
-            sessionNote: 'Notiz',
-            sessionNotePlaceholder: 'Notiz hinzufügen...',
-            noNote: 'Keine Notiz',
-            toastNoteSaved: 'Notiz gespeichert',
-
-            // Settings Modal
-            settings: 'Einstellungen',
-            language: 'Sprache / Language',
-            colorPalette: 'Farbpalette wählen',
-
-            // Time Tracker
-            start: 'Start',
-            pause: 'Pause',
-            stop: 'Stop',
-            resume: 'Weiter',
-            log: 'Log',
-
-            // Tooltips
-            tooltipNewTask: 'Neue Aufgabe (Strg+N)',
-            tooltipExport: 'Als Markdown exportieren',
-            tooltipCopy: 'In Zwischenablage kopieren',
-            tooltipInfo: 'Zusätzliche Info',
-            tooltipDelete: 'Löschen',
-            tooltipSettings: 'Einstellungen',
-
-            // Theme
-            themeLabel: 'Theme / Modus',
-            themeDark: 'Dark',
-            themeLight: 'Light',
-
-            // Toast Messages
-            toastCopied: 'In Zwischenablage kopiert!',
-            toastTaskDeleted: 'Aufgabe gelöscht',
-            toastTaskUpdated: 'Aufgabe aktualisiert',
-            toastTaskAdded: 'Aufgabe hinzugefügt',
-            toastAddedAsTask: 'Als Aufgabe hinzugefügt!',
-            toastDeleted: 'Gelöscht',
-            toastClipboardSaved: 'In Zwischenablage gespeichert',
-            toastSaved: 'Gespeichert',
-            toastImageSaved: 'Bild gespeichert!',
-            toastPastedImageSaved: 'Bild aus Zwischenablage gespeichert!',
-            toastSelectImage: 'Bitte wähle eine Bilddatei',
-            toastImageTooLarge: 'Bild zu groß (max. 2MB)',
-            toastImageOpenedNewTab: 'Bild in neuem Tab geöffnet',
-            toastEnterDescription: 'Bitte gib eine Beschreibung ein',
-            toastInfoSaved: 'Info gespeichert',
-            toastInfoRemoved: 'Info entfernt',
-            toastInfoDeleted: 'Info gelöscht',
-            toastTrackerStarted: 'Zeiterfassung gestartet',
-            toastTrackerPaused: 'Zeiterfassung pausiert',
-            toastTrackerResumed: 'Zeiterfassung fortgesetzt',
-            toastWorktimeSaved: 'Arbeitszeit gespeichert:',
-            toastEntryDeleted: 'Eintrag gelöscht',
-            toastAllEntriesDeleted: 'Alle Einträge gelöscht',
-            toastNoDoneTasks: 'Keine erledigten Aufgaben zum Exportieren',
-            toastExported: 'Aufgaben als Markdown kopiert!',
-            toastTextSaved: 'Text gespeichert!',
-            toastMovedTo: 'Verschoben nach',
-            toastPaletteSaved: 'Farbpalette gespeichert!',
-            toastSettingsSaved: 'Einstellungen gespeichert!',
-
-            // Duration
-            min: 'Min.',
-            hours: 'Std.',
-            days: 'Tag(e)',
-
-            // Export
-            completedTasks: 'Erledigte Aufgaben',
-            processingTime: 'Bearbeitungszeit',
-            completedAt: 'Abgeschlossen',
-            unknown: 'Unbekannt',
-
-            // Archive & Logs
-            tooltipArchive: 'Klick: Tasks archivieren | Doppelklick/Rechtsklick: Archiv-Logs öffnen',
-            tooltipViewLogs: 'Archiv-Logs anzeigen',
-            archiveLogs: 'Archiv-Logs',
-            searchPlaceholder: 'Suchen...',
-            noArchivedLogs: 'Keine archivierten Logs',
-            toastArchived: 'Tasks archiviert',
-            toastNoDoneTasksToArchive: 'Keine erledigten Tasks zum Archivieren',
-            toastClipboardCleared: 'Zwischenablage geleert',
-            confirmClearClipboard: 'Wirklich alle Einträge löschen?',
-
-            // Archive Filters
-            filterPriority: 'Priorität',
-            filterTime: 'Zeitraum',
-            filterAll: 'Alle',
-            filterHigh: 'Hoch',
-            filterMedium: 'Mittel',
-            filterLow: 'Niedrig',
-            filterToday: 'Heute',
-            filterWeek: '7 Tage',
-            filterMonth: '30 Tage',
-
-            // Pin
-            tooltipPin: 'Anpinnen',
-            tooltipUnpin: 'Pin lösen',
-            toastPinned: 'Task angepinnt',
-            toastUnpinned: 'Pin gelöst',
-
-            // Clear Clipboard
-            tooltipClearClipboard: 'Zwischenablage leeren'
-        },
-        en: {
-            // Header
-            dashboardTitle: 'My Dashboard',
-            tasks: 'Tasks',
-
-            // Columns
-            todo: 'To Do',
-            inProgress: 'In Progress',
-            done: 'Done',
-            noTasks: 'No tasks',
-
-            // Clipboard
-            clipboard: 'Clipboard',
-            clipboardEmpty: 'Clipboard empty',
-            clipboardPasteHint: 'Ctrl+V to paste',
-            saveText: 'Save text',
-            image: 'Image',
-            copy: 'Copy',
-            task: 'Task',
-            clipboardPlaceholder: 'Paste or type text here...\nCtrl+V to quickly paste\nDrag & drop images',
-
-            // Task Modal
-            newTask: 'New Task',
-            editTask: 'Edit Task',
-            description: 'Description',
-            taskPlaceholder: 'What needs to be done?\nShift+Enter to save',
-            priority: 'Priority',
-            low: 'Low',
-            medium: 'Medium',
-            high: 'High',
-            statusHistory: 'Status History',
-            save: 'Save',
-            delete: 'Delete',
-            cancel: 'Cancel',
-
-            // Info Modal
-            additionalInfo: 'Additional Info',
-            noteOrInfo: 'Note or additional info',
-            infoPlaceholder: 'Enter additional information...\nShift+Enter to save',
-
-            // Worktime Modal
-            worktimeLog: 'Work Time Log',
-            total: 'Total',
-            sessions: 'Sessions',
-            noWorktimeRecorded: 'No work time recorded yet',
-            deleteAll: 'Delete all',
-            sessionNote: 'Note',
-            sessionNotePlaceholder: 'Add a note...',
-            noNote: 'No note',
-            toastNoteSaved: 'Note saved',
-
-            // Settings Modal
-            settings: 'Settings',
-            language: 'Language / Sprache',
-            colorPalette: 'Choose color palette',
-
-            // Time Tracker
-            start: 'Start',
-            pause: 'Pause',
-            stop: 'Stop',
-            resume: 'Resume',
-            log: 'Log',
-
-            // Tooltips
-            tooltipNewTask: 'New Task (Ctrl+N)',
-            tooltipExport: 'Export as Markdown',
-            tooltipCopy: 'Copy to clipboard',
-            tooltipInfo: 'Additional info',
-            tooltipDelete: 'Delete',
-            tooltipSettings: 'Settings',
-
-            // Theme
-            themeLabel: 'Theme / Mode',
-            themeDark: 'Dark',
-            themeLight: 'Light',
-
-            // Toast Messages
-            toastCopied: 'Copied to clipboard!',
-            toastTaskDeleted: 'Task deleted',
-            toastTaskUpdated: 'Task updated',
-            toastTaskAdded: 'Task added',
-            toastAddedAsTask: 'Added as task!',
-            toastDeleted: 'Deleted',
-            toastClipboardSaved: 'Saved to clipboard',
-            toastSaved: 'Saved',
-            toastImageSaved: 'Image saved!',
-            toastPastedImageSaved: 'Image from clipboard saved!',
-            toastSelectImage: 'Please select an image file',
-            toastImageTooLarge: 'Image too large (max. 2MB)',
-            toastImageOpenedNewTab: 'Image opened in new tab',
-            toastEnterDescription: 'Please enter a description',
-            toastInfoSaved: 'Info saved',
-            toastInfoRemoved: 'Info removed',
-            toastInfoDeleted: 'Info deleted',
-            toastTrackerStarted: 'Time tracking started',
-            toastTrackerPaused: 'Time tracking paused',
-            toastTrackerResumed: 'Time tracking resumed',
-            toastWorktimeSaved: 'Work time saved:',
-            toastEntryDeleted: 'Entry deleted',
-            toastAllEntriesDeleted: 'All entries deleted',
-            toastNoDoneTasks: 'No completed tasks to export',
-            toastExported: 'Tasks copied as Markdown!',
-            toastTextSaved: 'Text saved!',
-            toastMovedTo: 'Moved to',
-            toastPaletteSaved: 'Color palette saved!',
-            toastSettingsSaved: 'Settings saved!',
-
-            // Duration
-            min: 'min',
-            hours: 'hrs',
-            days: 'day(s)',
-
-            // Export
-            completedTasks: 'Completed Tasks',
-            processingTime: 'Processing time',
-            completedAt: 'Completed',
-            unknown: 'Unknown',
-
-            // Archive & Logs
-            tooltipArchive: 'Click: Archive tasks | Double-click/Right-click: Open archive logs',
-            tooltipViewLogs: 'View archive logs',
-            archiveLogs: 'Archive Logs',
-            searchPlaceholder: 'Search...',
-            noArchivedLogs: 'No archived logs',
-            toastArchived: 'Tasks archived',
-            toastNoDoneTasksToArchive: 'No completed tasks to archive',
-            toastClipboardCleared: 'Clipboard cleared',
-            confirmClearClipboard: 'Really delete all entries?',
-
-            // Archive Filters
-            filterPriority: 'Priority',
-            filterTime: 'Time Period',
-            filterAll: 'All',
-            filterHigh: 'High',
-            filterMedium: 'Medium',
-            filterLow: 'Low',
-            filterToday: 'Today',
-            filterWeek: '7 Days',
-            filterMonth: '30 Days',
-
-            // Pin
-            tooltipPin: 'Pin task',
-            tooltipUnpin: 'Unpin task',
-            toastPinned: 'Task pinned',
-            toastUnpinned: 'Task unpinned',
-
-            // Clear Clipboard
-            tooltipClearClipboard: 'Clear clipboard'
-        }
-    };
-
     // Get translation helper
-    function t(key) {
-        return translations[selectedLanguage][key] || translations['de'][key] || key;
-    }
+
 
     // Color Palettes Definition
     const colorPalettes = {
@@ -516,41 +202,50 @@ document.addEventListener('DOMContentLoaded', () => {
     init();
 
     function init() {
-        loadData();
-        loadSettings();
+        loadAppState();
         updateDateTime();
         setInterval(updateDateTime, 1000);
         setInterval(renderTasks, 60000);
         setupEventListeners();
     }
 
-    function loadData() {
-        chrome.storage.local.get(['tasks', 'clipboardItems', 'workTimeSessions', 'timeTracker', 'archivedTaskLogs'], (result) => {
-            if (result.tasks) {
-                tasks = result.tasks;
-            }
-            if (result.clipboardItems) {
-                clipboardItems = result.clipboardItems;
-            }
-            if (result.workTimeSessions) {
-                workTimeSessions = result.workTimeSessions;
-            }
-            if (result.archivedTaskLogs) {
-                archivedTaskLogs = result.archivedTaskLogs;
-            }
-            if (result.timeTracker && result.timeTracker.isRunning) {
-                // Restore running timer
-                timeTracker = result.timeTracker;
-                resumeTrackerFromStorage();
-            }
-            renderTasks();
-            renderClipboardItems();
-            updateStats();
-        });
+    async function loadAppState() {
+        const result = await StorageService.loadData();
+
+        if (result.tasks) tasks = result.tasks;
+        if (result.clipboardItems) clipboardItems = result.clipboardItems;
+        if (result.workTimeSessions) workTimeSessions = result.workTimeSessions;
+        if (result.archivedTaskLogs) archivedTaskLogs = result.archivedTaskLogs;
+
+        if (result.timeTracker && result.timeTracker.isRunning) {
+            timeTracker = result.timeTracker;
+            resumeTrackerFromStorage();
+        }
+
+        // Settings from storage if available (handling newer version structure)
+        if (result.settings) {
+            if (result.settings.theme) selectedTheme = result.settings.theme;
+            if (result.settings.language) selectedLanguage = result.settings.language;
+            if (result.settings.palette) selectedPalette = result.settings.palette;
+        }
+
+        // Apply loaded state
+        renderTasks();
+        renderClipboardItems();
+        updateStats();
+
+        // Initial settings application
+        setLanguage(selectedLanguage);
+        applyTheme(selectedTheme);
+        applyTranslations();
+        applyColorPalette(selectedPalette);
+        updateLanguageSelection();
+        updateThemeSelection();
+        updatePaletteSelection();
     }
 
     function saveData() {
-        chrome.storage.local.set({
+        StorageService.saveData({
             tasks: tasks,
             clipboardItems: clipboardItems,
             workTimeSessions: workTimeSessions,
@@ -578,28 +273,7 @@ document.addEventListener('DOMContentLoaded', () => {
         taskStats.textContent = `${doneTasks}/${tasks.length}`;
     }
 
-    function formatDateTime(timestamp) {
-        const date = new Date(timestamp);
-        const locale = selectedLanguage === 'en' ? 'en-GB' : 'de-DE';
-        return date.toLocaleDateString(locale, {
-            day: '2-digit',
-            month: '2-digit',
-            year: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    }
 
-    function formatDate(timestamp) {
-        const date = new Date(timestamp);
-        const locale = selectedLanguage === 'en' ? 'en-GB' : 'de-DE';
-        return date.toLocaleDateString(locale, {
-            day: '2-digit',
-            month: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    }
 
     function getStatusLabel(status) {
         const labels = {
@@ -1145,11 +819,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function saveSettingsData() {
-        chrome.storage.local.set({
-            selectedPalette: selectedPalette,
-            selectedLanguage: selectedLanguage,
-            selectedTheme: selectedTheme
-        });
+        const settings = {
+            theme: selectedTheme,
+            language: selectedLanguage,
+            palette: selectedPalette
+        };
+        StorageService.saveSettings(settings);
     }
 
     function openSettingsModal() {
@@ -1794,23 +1469,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Fuzzy search like Obsidian - all characters must be present (not in order)
-    function fuzzyMatch(query, text) {
-        if (!query) return true;
-        query = query.toLowerCase();
-        text = text.toLowerCase();
 
-        // Each character in query must exist in text
-        let textCopy = text;
-        for (const char of query) {
-            const index = textCopy.indexOf(char);
-            if (index === -1) {
-                return false;
-            }
-            // Remove found character to handle duplicates
-            textCopy = textCopy.slice(0, index) + textCopy.slice(index + 1);
-        }
-        return true;
-    }
 
     function renderArchiveLogs(searchQuery) {
         const archiveLogsEntriesEl = document.getElementById('archive-logs-entries');
@@ -2309,6 +1968,7 @@ document.addEventListener('DOMContentLoaded', () => {
         languageOptions.forEach(opt => {
             opt.addEventListener('click', () => {
                 selectedLanguage = opt.dataset.lang;
+                setLanguage(selectedLanguage);
                 updateLanguageSelection();
                 // Preview the language immediately
                 applyTranslations();
