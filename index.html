@@ -91,7 +91,7 @@
             </div>
         </div>
         <div class="header-right">
-            <button id="settings-btn" class="settings-btn" title="Einstellungen">
+            <button id="settings-btn" class="settings-btn" title="Einstellungen" aria-label="Einstellungen">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="12" cy="12" r="3"></circle>
@@ -110,7 +110,7 @@
                     <div class="column-title">
                         <div class="column-indicator"></div>
                         <h2>Zu erledigen</h2>
-                        <button id="add-task-btn" class="add-task-column-btn" title="Neue Aufgabe (Strg+N)">
+                        <button id="add-task-btn" class="add-task-column-btn" title="Neue Aufgabe (Strg+N)" aria-label="Neue Aufgabe">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
                                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                 stroke-linejoin="round">
@@ -140,7 +140,7 @@
                     <div class="column-title">
                         <div class="column-indicator"></div>
                         <h2>Erledigt</h2>
-                        <button id="export-done-btn" class="export-column-btn" title="Als Markdown exportieren">
+                        <button id="export-done-btn" class="export-column-btn" title="Als Markdown exportieren" aria-label="Als Markdown exportieren">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
                                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                 stroke-linejoin="round">
@@ -150,7 +150,7 @@
                             </svg>
                         </button>
                         <button id="archive-done-btn" class="export-column-btn"
-                            title="Klick: Tasks archivieren | Doppelklick/Rechtsklick: Archiv-Logs öffnen">
+                            title="Klick: Tasks archivieren | Doppelklick/Rechtsklick: Archiv-Logs öffnen" aria-label="Tasks archivieren">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
                                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                 stroke-linejoin="round">
@@ -180,7 +180,7 @@
                     </div>
                     <h3>Zwischenablage</h3>
                 </div>
-                <button id="clear-clipboard-btn" class="clear-clipboard-btn" title="Zwischenablage leeren">
+                <button id="clear-clipboard-btn" class="clear-clipboard-btn" title="Zwischenablage leeren" aria-label="Zwischenablage leeren">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <polyline points="3 6 5 6 21 6"></polyline>
@@ -220,7 +220,7 @@
     <!-- Modal für Aufgaben -->
     <div id="task-modal" class="modal hidden">
         <div class="modal-content">
-            <span class="close-btn">
+            <span class="close-btn" role="button" aria-label="Schließen" tabindex="0">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -274,7 +274,7 @@
     <!-- Zusätzliche Info Modal -->
     <div id="info-modal" class="modal hidden">
         <div class="modal-content">
-            <span class="close-btn info-close-btn">
+            <span class="close-btn info-close-btn" role="button" aria-label="Schließen" tabindex="0">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -322,7 +322,7 @@
     <!-- Arbeitszeit-Log Modal -->
     <div id="worktime-modal" class="modal hidden">
         <div class="modal-content worktime-modal-content">
-            <span class="close-btn worktime-close-btn">
+            <span class="close-btn worktime-close-btn" role="button" aria-label="Schließen" tabindex="0">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -355,7 +355,7 @@
     <!-- Settings Modal -->
     <div id="settings-modal" class="modal hidden">
         <div class="modal-content settings-modal-content">
-            <span class="close-btn settings-close-btn">
+            <span class="close-btn settings-close-btn" role="button" aria-label="Schließen" tabindex="0">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -491,7 +491,7 @@
     <!-- Archive Logs Modal -->
     <div id="archive-logs-modal" class="modal hidden">
         <div class="modal-content archive-logs-modal-content">
-            <span class="close-btn archive-logs-close-btn">
+            <span class="close-btn archive-logs-close-btn" role="button" aria-label="Schließen" tabindex="0">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -537,7 +537,7 @@
     <!-- Confirmation Modal -->
     <div id="confirm-modal" class="modal hidden">
         <div class="modal-content confirm-modal-content">
-            <span class="close-btn confirm-close-btn">
+            <span class="close-btn confirm-close-btn" role="button" aria-label="Schließen" tabindex="0">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="18" y1="6" x2="6" y2="18"></line>

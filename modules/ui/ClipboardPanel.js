@@ -4,8 +4,9 @@
  */
 
 import { t } from '../utils/i18n.js';
-import { escapeHtml, formatDateTime } from '../utils/helpers.js';
+import { escapeHtml, formatDateTime, generateId } from '../utils/helpers.js';
 import { ICONS } from '../config/icons.js';
+import { MAX_CLIPBOARD_ITEMS, MAX_IMAGE_SIZE_BYTES } from '../config/constants.js';
 
 export class ClipboardPanel {
     /**
@@ -64,14 +65,14 @@ export class ClipboardPanel {
         if (!content || (type === 'text' && !content.trim())) return;
 
         const newItem = {
-            id: Date.now().toString(),
+            id: generateId(),
             content: type === 'text' ? content.trim() : content,
             type: type,
             createdAt: Date.now()
         };
 
         this.items.unshift(newItem);
-        if (this.items.length > 50) {
+        if (this.items.length > MAX_CLIPBOARD_ITEMS) {
             this.items.pop();
         }
         this.onSave();
@@ -100,7 +101,11 @@ export class ClipboardPanel {
 
             let contentHtml = '';
             if (item.type === 'image') {
-                contentHtml = `<img src="${item.content}" class="clipboard-image" alt="${t('image')}"/>`;
+                if (item.content && item.content.startsWith('data:image/')) {
+                    contentHtml = `<img src="${item.content}" class="clipboard-image" alt="${t('image')}"/>`;
+                } else {
+                    contentHtml = `<div class="clipboard-item-content">${t('invalidImage') || 'Invalid image'}</div>`;
+                }
             } else {
                 contentHtml = `<div class="clipboard-item-content">${escapeHtml(item.content)}</div>`;
             }
@@ -164,12 +169,8 @@ export class ClipboardPanel {
         try {
             await navigator.clipboard.writeText(text);
         } catch (err) {
-            const textarea = document.createElement('textarea');
-            textarea.value = text;
-            document.body.appendChild(textarea);
-            textarea.select();
-            document.execCommand('copy');
-            document.body.removeChild(textarea);
+            console.error('Failed to copy to clipboard:', err);
+            this.showToast(t('toastCopyFailed') || 'Copy failed - please copy manually', 'error');
         }
     }
 
@@ -198,7 +199,7 @@ export class ClipboardPanel {
             return;
         }
 
-        if (file.size > 2 * 1024 * 1024) {
+        if (file.size > MAX_IMAGE_SIZE_BYTES) {
             this.showToast(t('toastImageTooLarge'), 'error');
             return;
         }
@@ -215,7 +216,7 @@ export class ClipboardPanel {
      * Handle image from blob (for paste)
      */
     handleImageFromBlob(blob) {
-        if (blob.size > 2 * 1024 * 1024) {
+        if (blob.size > MAX_IMAGE_SIZE_BYTES) {
             this.showToast(t('toastImageTooLarge'), 'error');
             return;
         }

@@ -1,8 +1,15 @@
 import { ICONS as icons } from './modules/config/icons.js';
 import { COLOR_PALETTES } from './modules/config/colorPalettes.js';
+import { 
+    MAX_CLIPBOARD_ITEMS, 
+    MAX_IMAGE_SIZE_BYTES, 
+    TOAST_DURATION_MS, 
+    DRAG_THROTTLE_MS,
+    MODAL_ANIMATION_MS 
+} from './modules/config/constants.js';
 import { StorageService } from './modules/services/storage.js';
 import { t, setLanguage, getLanguage } from './modules/utils/i18n.js';
-import { formatDateTime, formatDate, fuzzyMatch, escapeHtml } from './modules/utils/helpers.js';
+import { formatDateTime, formatDate, fuzzyMatch, escapeHtml, generateId } from './modules/utils/helpers.js';
 import { TimeTracker } from './modules/ui/TimeTracker.js';
 import { ClipboardPanel } from './modules/ui/ClipboardPanel.js';
 import { ArchiveService } from './modules/services/ArchiveService.js';
@@ -91,7 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
         showToast: showToast,
         onCreateTask: (content) => {
             const newTask = {
-                id: Date.now().toString(),
+                id: generateId(),
                 content: content,
                 status: 'todo',
                 priority: 'medium',
@@ -166,14 +173,19 @@ document.addEventListener('DOMContentLoaded', () => {
         updatePaletteSelection();
     }
 
-    function saveData() {
-        StorageService.saveData({
-            tasks: tasks,
-            clipboardItems: clipboardItems,
-            workTimeSessions: timeTrackerModule.getSessions(),
-            timeTracker: timeTrackerModule.getState(),
-            archivedTaskLogs: archiveService.getArchivedLogs()
-        });
+    async function saveData() {
+        try {
+            await StorageService.saveData({
+                tasks: tasks,
+                clipboardItems: clipboardItems,
+                workTimeSessions: timeTrackerModule.getSessions(),
+                timeTracker: timeTrackerModule.getState(),
+                archivedTaskLogs: archiveService.getArchivedLogs()
+            });
+        } catch (error) {
+            console.error('Failed to save data:', error);
+            showToast(t('toastSaveError') || 'Error saving data', 'error');
+        }
     }
 
     function updateDateTime() {
@@ -245,6 +257,62 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ============ TASK FUNCTIONS ============
 
+    // Set up event delegation for task containers (once)
+    function setupTaskDelegation() {
+        const taskContainers = [todoList, inProgressList, doneList];
+        
+        taskContainers.forEach(container => {
+            container.addEventListener('click', (e) => {
+                const taskCard = e.target.closest('.task-card');
+                if (!taskCard) return;
+
+                const taskId = taskCard.dataset.id;
+                const task = tasks.find(t => t.id === taskId);
+                if (!task) return;
+
+                // Copy button
+                if (e.target.closest('.copy-btn')) {
+                    e.stopPropagation();
+                    copyToClipboard(task.content);
+                    showToast(t('toastCopied'), 'success');
+                    return;
+                }
+
+                // Delete button
+                if (e.target.closest('.delete-btn')) {
+                    e.stopPropagation();
+                    tasks = tasks.filter(t => t.id !== task.id);
+                    saveData();
+                    renderTasks();
+                    showToast(t('toastTaskDeleted'), 'info');
+                    return;
+                }
+
+                // Info button
+                if (e.target.closest('.info-btn')) {
+                    e.stopPropagation();
+                    openInfoModal(task);
+                    return;
+                }
+
+                // Pin button
+                if (e.target.closest('.pin-btn')) {
+                    e.stopPropagation();
+                    task.pinned = !task.pinned;
+                    saveData();
+                    renderTasks();
+                    showToast(task.pinned ? t('toastPinned') : t('toastUnpinned'), 'success');
+                    return;
+                }
+
+                // Click on card itself (not on a button) - open edit modal
+                if (!e.target.closest('.task-action-btn')) {
+                    openEditModal(task);
+                }
+            });
+        });
+    }
+
     function renderTasks() {
         [todoList, inProgressList, doneList].forEach(list => list.innerHTML = '');
 
@@ -315,17 +383,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 <div class="task-meta">
                     <div class="task-actions">
-                        <button class="task-action-btn pin-btn ${task.pinned ? 'pinned' : ''}" title="${task.pinned ? t('tooltipUnpin') : t('tooltipPin')}">${icons.pin}</button>
-                        <button class="task-action-btn copy-btn" title="${t('tooltipCopy')}">${icons.copy}</button>
-                        <button class="task-action-btn info-btn" title="${t('tooltipInfo')}">${icons.info}</button>
-                        <button class="task-action-btn delete-btn" title="${t('tooltipDelete')}">${icons.trash}</button>
+                        <button class="task-action-btn pin-btn ${task.pinned ? 'pinned' : ''}" title="${task.pinned ? t('tooltipUnpin') : t('tooltipPin')}" aria-label="${task.pinned ? t('tooltipUnpin') : t('tooltipPin')}">${icons.pin}</button>
+                        <button class="task-action-btn copy-btn" title="${t('tooltipCopy')}" aria-label="${t('tooltipCopy')}">${icons.copy}</button>
+                        <button class="task-action-btn info-btn" title="${t('tooltipInfo')}" aria-label="${t('tooltipInfo')}">${icons.info}</button>
+                        <button class="task-action-btn delete-btn" title="${t('tooltipDelete')}" aria-label="${t('tooltipDelete')}">${icons.trash}</button>
                     </div>
                     <span class="task-priority priority-${task.priority || 'medium'}">${getPriorityLabel(task.priority)}</span>
                 </div>
             </div>
         `;
 
-        // Drag events
+        // Drag events (must stay on element for dataTransfer)
         div.addEventListener('dragstart', (e) => {
             currentDragItem = task;
             div.classList.add('dragging');
@@ -336,43 +404,6 @@ document.addEventListener('DOMContentLoaded', () => {
             currentDragItem = null;
             div.classList.remove('dragging');
             document.querySelectorAll('.column').forEach(col => col.classList.remove('drag-over'));
-        });
-
-        // Click to edit
-        div.addEventListener('click', (e) => {
-            if (e.target.closest('.task-action-btn')) return;
-            openEditModal(task);
-        });
-
-        // Copy button
-        div.querySelector('.copy-btn').addEventListener('click', (e) => {
-            e.stopPropagation();
-            copyToClipboard(task.content);
-            showToast(t('toastCopied'), 'success');
-        });
-
-        // Delete button
-        div.querySelector('.delete-btn').addEventListener('click', (e) => {
-            e.stopPropagation();
-            tasks = tasks.filter(t => t.id !== task.id);
-            saveData();
-            renderTasks();
-            showToast(t('toastTaskDeleted'), 'info');
-        });
-
-        // Info button
-        div.querySelector('.info-btn').addEventListener('click', (e) => {
-            e.stopPropagation();
-            openInfoModal(task);
-        });
-
-        // Pin button
-        div.querySelector('.pin-btn').addEventListener('click', (e) => {
-            e.stopPropagation();
-            task.pinned = !task.pinned;
-            saveData();
-            renderTasks();
-            showToast(task.pinned ? t('toastPinned') : t('toastUnpinned'), 'success');
         });
 
         return div;
@@ -387,13 +418,69 @@ document.addEventListener('DOMContentLoaded', () => {
         return labels[priority] || labels.medium;
     }
 
-    function escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
-
     // ============ CLIPBOARD FUNCTIONS ============
+
+    // Set up event delegation for clipboard container (once)
+    function setupClipboardDelegation() {
+        clipboardItemsContainer.addEventListener('click', (e) => {
+            const itemEl = e.target.closest('.clipboard-item');
+            if (!itemEl) return;
+
+            const itemId = itemEl.dataset.id;
+            const item = clipboardItems.find(i => i.id === itemId);
+            if (!item) return;
+
+            // Copy button
+            if (e.target.closest('.copy')) {
+                if (item.type === 'image') {
+                    copyImageToClipboard(item.content);
+                } else {
+                    copyToClipboard(item.content);
+                }
+                showToast(t('toastCopied'), 'success');
+                return;
+            }
+
+            // Task button
+            if (e.target.closest('.task')) {
+                const newTask = {
+                    id: generateId(),
+                    content: item.content,
+                    status: 'todo',
+                    priority: 'medium',
+                    createdAt: Date.now(),
+                    history: []
+                };
+                tasks.push(newTask);
+                saveData();
+                renderTasks();
+                showToast(t('toastAddedAsTask'), 'success');
+                return;
+            }
+
+            // Delete button
+            if (e.target.closest('.delete')) {
+                const index = clipboardItems.findIndex(i => i.id === itemId);
+                if (index !== -1) {
+                    clipboardItems.splice(index, 1);
+                    saveData();
+                    renderClipboardItems();
+                    showToast(t('toastDeleted'), 'info');
+                }
+                return;
+            }
+
+            // Click on item itself (not on a button) - copy
+            if (!e.target.closest('.clipboard-item-btn')) {
+                if (item.type === 'image') {
+                    copyImageToClipboard(item.content);
+                } else {
+                    copyToClipboard(item.content);
+                }
+                showToast(t('toastCopied'), 'success');
+            }
+        });
+    }
 
     function renderClipboardItems() {
         clipboardItemsContainer.innerHTML = '';
@@ -408,13 +495,18 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        clipboardItems.forEach((item, index) => {
+        clipboardItems.forEach((item) => {
             const itemEl = document.createElement('div');
             itemEl.className = 'clipboard-item';
+            itemEl.dataset.id = item.id;
 
             let contentHtml = '';
             if (item.type === 'image') {
-                contentHtml = `<img src="${item.content}" class="clipboard-image" alt="${t('image')}"/>`;
+                if (item.content && item.content.startsWith('data:image/')) {
+                    contentHtml = `<img src="${item.content}" class="clipboard-image" alt="${t('image')}"/>`;
+                } else {
+                    contentHtml = `<div class="clipboard-item-content">${t('invalidImage') || 'Invalid image'}</div>`;
+                }
             } else {
                 contentHtml = `<div class="clipboard-item-content">${escapeHtml(item.content)}</div>`;
             }
@@ -429,54 +521,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             `;
 
-            // Copy button
-            itemEl.querySelector('.copy').addEventListener('click', () => {
-                if (item.type === 'image') {
-                    copyImageToClipboard(item.content);
-                } else {
-                    copyToClipboard(item.content);
-                }
-                showToast(t('toastCopied'), 'success');
-            });
-
-            // Add as task button (only for text)
-            const taskBtn = itemEl.querySelector('.task');
-            if (taskBtn) {
-                taskBtn.addEventListener('click', () => {
-                    const newTask = {
-                        id: Date.now().toString(),
-                        content: item.content,
-                        status: 'todo',
-                        priority: 'medium',
-                        createdAt: Date.now(),
-                        history: []
-                    };
-                    tasks.push(newTask);
-                    saveData();
-                    renderTasks();
-                    showToast(t('toastAddedAsTask'), 'success');
-                });
-            }
-
-            // Delete button
-            itemEl.querySelector('.delete').addEventListener('click', () => {
-                clipboardItems.splice(index, 1);
-                saveData();
-                renderClipboardItems();
-                showToast(t('toastDeleted'), 'info');
-            });
-
-            // Click to copy
-            itemEl.addEventListener('click', (e) => {
-                if (e.target.closest('.clipboard-item-btn')) return;
-                if (item.type === 'image') {
-                    copyImageToClipboard(item.content);
-                } else {
-                    copyToClipboard(item.content);
-                }
-                showToast(t('toastCopied'), 'success');
-            });
-
             clipboardItemsContainer.appendChild(itemEl);
         });
     }
@@ -485,14 +529,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!content || (type === 'text' && !content.trim())) return;
 
         const newItem = {
-            id: Date.now().toString(),
+            id: generateId(),
             content: type === 'text' ? content.trim() : content,
             type: type,
             createdAt: Date.now()
         };
 
         clipboardItems.unshift(newItem);
-        if (clipboardItems.length > 50) {
+        if (clipboardItems.length > MAX_CLIPBOARD_ITEMS) {
             clipboardItems.pop();
         }
         saveData();
@@ -503,12 +547,8 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             await navigator.clipboard.writeText(text);
         } catch (err) {
-            const textarea = document.createElement('textarea');
-            textarea.value = text;
-            document.body.appendChild(textarea);
-            textarea.select();
-            document.execCommand('copy');
-            document.body.removeChild(textarea);
+            console.error('Failed to copy to clipboard:', err);
+            showToast(t('toastCopyFailed') || 'Copy failed - please copy manually', 'error');
         }
     }
 
@@ -531,7 +571,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        if (file.size > 2 * 1024 * 1024) {
+        if (file.size > MAX_IMAGE_SIZE_BYTES) {
             showToast(t('toastImageTooLarge'), 'error');
             return;
         }
@@ -545,7 +585,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function handleImageFromBlob(blob) {
-        if (blob.size > 2 * 1024 * 1024) {
+        if (blob.size > MAX_IMAGE_SIZE_BYTES) {
             showToast(t('toastImageTooLarge'), 'error');
             return;
         }
@@ -618,7 +658,7 @@ document.addEventListener('DOMContentLoaded', () => {
         modal.classList.remove('visible');
         setTimeout(() => {
             modal.classList.add('hidden');
-        }, 300);
+        }, MODAL_ANIMATION_MS);
     }
 
     // Info Modal Functions
@@ -638,7 +678,7 @@ document.addEventListener('DOMContentLoaded', () => {
         infoModal.classList.remove('visible');
         setTimeout(() => {
             infoModal.classList.add('hidden');
-        }, 300);
+        }, MODAL_ANIMATION_MS);
         editingInfoTaskId = null;
     }
 
@@ -709,7 +749,7 @@ document.addEventListener('DOMContentLoaded', () => {
         modal.classList.remove('visible');
         setTimeout(() => {
             modal.classList.add('hidden');
-        }, 300);
+        }, MODAL_ANIMATION_MS);
         if (confirmResolve) {
             confirmResolve(false); // Resolve false if closed without choice
             confirmResolve = null;
@@ -717,28 +757,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ============ SETTINGS FUNCTIONS ============
-
-    function loadSettings() {
-        chrome.storage.local.get(['selectedPalette', 'selectedLanguage', 'selectedTheme'], (result) => {
-            if (result.selectedPalette && colorPalettes[result.selectedPalette]) {
-                selectedPalette = result.selectedPalette;
-                applyColorPalette(selectedPalette);
-                updatePaletteSelection();
-            }
-            if (result.selectedLanguage && translations[result.selectedLanguage]) {
-                selectedLanguage = result.selectedLanguage;
-            }
-            if (result.selectedTheme) {
-                selectedTheme = result.selectedTheme;
-                applyTheme(selectedTheme);
-            }
-            // Always apply translations and update UI
-            updateLanguageSelection();
-            updateThemeSelection();
-            applyTranslations();
-            updateDateTime();
-        });
-    }
 
     function saveSettingsData() {
         const settings = {
@@ -763,7 +781,7 @@ document.addEventListener('DOMContentLoaded', () => {
         settingsModal.classList.remove('visible');
         setTimeout(() => {
             settingsModal.classList.add('hidden');
-        }, 300);
+        }, MODAL_ANIMATION_MS);
     }
 
     function updatePaletteSelection() {
@@ -804,6 +822,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function applyTranslations() {
+        // Update HTML lang attribute for accessibility
+        document.documentElement.lang = selectedLanguage;
+
         // Update document title
         document.title = t('dashboardTitle');
 
@@ -819,12 +840,31 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelector('#in-progress .column-title h2').textContent = t('inProgress');
         document.querySelector('#done .column-title h2').textContent = t('done');
 
-        // Tooltips
-        document.getElementById('add-task-btn').title = t('tooltipNewTask');
-        document.getElementById('export-done-btn').title = t('tooltipExport');
-        document.getElementById('archive-done-btn').title = t('tooltipArchive');
-        document.getElementById('settings-btn').title = t('tooltipSettings');
-        document.getElementById('clear-clipboard-btn').title = t('tooltipClearClipboard');
+        // Tooltips and aria-labels for icon-only buttons
+        const addTaskBtn = document.getElementById('add-task-btn');
+        addTaskBtn.title = t('tooltipNewTask');
+        addTaskBtn.setAttribute('aria-label', t('tooltipNewTask'));
+
+        const exportDoneBtn = document.getElementById('export-done-btn');
+        exportDoneBtn.title = t('tooltipExport');
+        exportDoneBtn.setAttribute('aria-label', t('tooltipExport'));
+
+        const archiveDoneBtn = document.getElementById('archive-done-btn');
+        archiveDoneBtn.title = t('tooltipArchive');
+        archiveDoneBtn.setAttribute('aria-label', t('tooltipArchive'));
+
+        const settingsBtn = document.getElementById('settings-btn');
+        settingsBtn.title = t('tooltipSettings');
+        settingsBtn.setAttribute('aria-label', t('tooltipSettings'));
+
+        const clearClipboardBtn = document.getElementById('clear-clipboard-btn');
+        clearClipboardBtn.title = t('tooltipClearClipboard');
+        clearClipboardBtn.setAttribute('aria-label', t('tooltipClearClipboard'));
+
+        // Update aria-labels for close buttons
+        document.querySelectorAll('.close-btn').forEach(btn => {
+            btn.setAttribute('aria-label', t('close') || 'Schließen');
+        });
 
         document.querySelector('#archive-logs-modal h2').innerHTML = `
             <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
@@ -1011,470 +1051,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         setTimeout(() => {
             toast.classList.remove('show');
-        }, 3000);
-    }
-
-    // ============ TIME TRACKER FUNCTIONS ============
-
-    function resumeTrackerFromStorage() {
-        updateTrackerUI();
-        if (!timeTracker.isPaused) {
-            trackerInterval = setInterval(updateTrackerDisplay, 1000);
-        }
-        updateTrackerDisplay();
-    }
-
-    function startTracker() {
-        timeTracker.isRunning = true;
-        timeTracker.isPaused = false;
-        timeTracker.startTime = Date.now();
-        timeTracker.totalPausedTime = 0;
-        timeTracker.pauseStartTime = null;
-
-        updateTrackerUI();
-        trackerInterval = setInterval(updateTrackerDisplay, 1000);
-        saveData();
-        showToast(t('toastTrackerStarted'), 'success');
-    }
-
-    function stopTracker() {
-        if (!timeTracker.isRunning) return;
-
-        const endTime = Date.now();
-        const duration = endTime - timeTracker.startTime - timeTracker.totalPausedTime;
-
-        // Save session
-        const session = {
-            id: Date.now().toString(),
-            startTime: timeTracker.startTime,
-            endTime: endTime,
-            duration: duration,
-            pausedTime: timeTracker.totalPausedTime
-        };
-        workTimeSessions.unshift(session);
-
-        // Reset tracker
-        timeTracker.isRunning = false;
-        timeTracker.isPaused = false;
-        timeTracker.startTime = null;
-        timeTracker.totalPausedTime = 0;
-        timeTracker.pauseStartTime = null;
-
-        clearInterval(trackerInterval);
-        trackerInterval = null;
-
-        updateTrackerUI();
-        trackerTimeEl.textContent = '00:00:00';
-        saveData();
-        showToast(`${t('toastWorktimeSaved')} ${formatTrackerTime(duration)}`, 'success');
-    }
-
-    function pauseTracker() {
-        if (!timeTracker.isRunning || timeTracker.isPaused) return;
-
-        timeTracker.isPaused = true;
-        timeTracker.pauseStartTime = Date.now();
-
-        clearInterval(trackerInterval);
-        trackerInterval = null;
-
-        updateTrackerUI();
-        saveData();
-        showToast(t('toastTrackerPaused'), 'info');
-    }
-
-    function resumeTracker() {
-        if (!timeTracker.isRunning || !timeTracker.isPaused) return;
-
-        timeTracker.totalPausedTime += Date.now() - timeTracker.pauseStartTime;
-        timeTracker.isPaused = false;
-        timeTracker.pauseStartTime = null;
-
-        trackerInterval = setInterval(updateTrackerDisplay, 1000);
-
-        updateTrackerUI();
-        saveData();
-        showToast(t('toastTrackerResumed'), 'success');
-    }
-
-    function updateTrackerDisplay() {
-        if (!timeTracker.isRunning) return;
-
-        let elapsed = Date.now() - timeTracker.startTime - timeTracker.totalPausedTime;
-        if (timeTracker.isPaused && timeTracker.pauseStartTime) {
-            elapsed = timeTracker.pauseStartTime - timeTracker.startTime - timeTracker.totalPausedTime;
-        }
-
-        trackerTimeEl.textContent = formatTrackerTime(elapsed);
-    }
-
-    function updateTrackerUI() {
-        if (timeTracker.isRunning) {
-            trackerStartBtn.innerHTML = `
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="6" y="4" width="4" height="16"></rect>
-                    <rect x="14" y="4" width="4" height="16"></rect>
-                </svg>
-                Stop
-            `;
-            trackerStartBtn.classList.add('running');
-            trackerPauseBtn.disabled = false;
-
-            if (timeTracker.isPaused) {
-                trackerDisplay.classList.remove('running');
-                trackerDisplay.classList.add('paused');
-                trackerPauseBtn.innerHTML = `
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                    </svg>
-                    Weiter
-                `;
-                trackerPauseBtn.classList.add('paused');
-            } else {
-                trackerDisplay.classList.add('running');
-                trackerDisplay.classList.remove('paused');
-                trackerPauseBtn.innerHTML = `
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="6" y="4" width="4" height="16"></rect>
-                        <rect x="14" y="4" width="4" height="16"></rect>
-                    </svg>
-                    Pause
-                `;
-                trackerPauseBtn.classList.remove('paused');
-            }
-        } else {
-            trackerStartBtn.innerHTML = `
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                </svg>
-                Start
-            `;
-            trackerStartBtn.classList.remove('running');
-            trackerPauseBtn.disabled = true;
-            trackerPauseBtn.classList.remove('paused');
-            trackerDisplay.classList.remove('running', 'paused');
-            trackerPauseBtn.innerHTML = `
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="6" y="4" width="4" height="16"></rect>
-                    <rect x="14" y="4" width="4" height="16"></rect>
-                </svg>
-                Pause
-            `;
-        }
-    }
-
-    function formatTrackerTime(ms) {
-        const totalSeconds = Math.floor(ms / 1000);
-        const hours = Math.floor(totalSeconds / 3600);
-        const minutes = Math.floor((totalSeconds % 3600) / 60);
-        const seconds = totalSeconds % 60;
-        return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-    }
-
-    function openWorktimeModal() {
-        renderWorktimeEntries();
-        worktimeModal.classList.remove('hidden');
-        requestAnimationFrame(() => {
-            worktimeModal.classList.add('visible');
-        });
-    }
-
-    function closeWorktimeModal() {
-        worktimeModal.classList.remove('visible');
-        setTimeout(() => {
-            worktimeModal.classList.add('hidden');
-        }, 300);
-    }
-
-    function renderWorktimeEntries() {
-        // Calculate summary
-        const totalDuration = workTimeSessions.reduce((sum, s) => sum + s.duration, 0);
-        const sessionCount = workTimeSessions.length;
-
-        worktimeSummaryEl.innerHTML = `
-            <div class="summary-item">
-                <div class="summary-label">${t('total')}</div>
-                <div class="summary-value">${formatTrackerTime(totalDuration)}</div>
-            </div>
-            <div class="summary-item">
-                <div class="summary-label">${t('sessions')}</div>
-                <div class="summary-value">${sessionCount}</div>
-            </div>
-        `;
-
-        if (workTimeSessions.length === 0) {
-            worktimeEntriesEl.innerHTML = `
-                <div class="worktime-empty">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <polyline points="12 6 12 12 16 14"></polyline>
-                    </svg>
-                    <div>${t('noWorktimeRecorded')}</div>
-                </div>
-            `;
-            return;
-        }
-
-        let html = '';
-        workTimeSessions.forEach((session, index) => {
-            const startDate = new Date(session.startTime);
-            const endDate = new Date(session.endTime);
-            const locale = selectedLanguage === 'en' ? 'en-GB' : 'de-DE';
-            const dateStr = startDate.toLocaleDateString(locale, { weekday: 'short', day: '2-digit', month: '2-digit', year: '2-digit' });
-            const startTimeStr = startDate.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
-            const endTimeStr = endDate.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
-            const noteValue = session.note || '';
-            const noteDisplay = noteValue || t('sessionNotePlaceholder');
-            const noteClass = noteValue ? 'has-note' : 'no-note';
-
-            html += `
-                <div class="worktime-entry" data-index="${index}" data-id="${session.id}">
-                    <div class="worktime-entry-main">
-                        <div class="worktime-entry-info">
-                            <div class="worktime-entry-date">${dateStr}</div>
-                            <div class="worktime-entry-times">${startTimeStr} - ${endTimeStr}</div>
-                        </div>
-                        <div class="worktime-entry-note ${noteClass}" data-id="${session.id}" title="${t('sessionNote')}">
-                            <span class="note-display">${escapeHtml(noteDisplay)}</span>
-                            <input type="text" class="note-input hidden" value="${escapeHtml(noteValue)}" placeholder="${t('sessionNotePlaceholder')}" />
-                        </div>
-                    </div>
-                    <div class="worktime-entry-actions">
-                        <div class="worktime-entry-duration">${formatTrackerTime(session.duration)}</div>
-                        <button class="worktime-entry-delete" data-id="${session.id}">
-                            ${icons.trash}
-                        </button>
-                    </div>
-                </div>
-            `;
-        });
-        worktimeEntriesEl.innerHTML = html;
-
-        // Add delete listeners
-        worktimeEntriesEl.querySelectorAll('.worktime-entry-delete').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const id = btn.dataset.id;
-                workTimeSessions = workTimeSessions.filter(s => s.id !== id);
-                saveData();
-                renderWorktimeEntries();
-                showToast(t('toastEntryDeleted'), 'info');
-            });
-        });
-
-        // Add note editing listeners
-        worktimeEntriesEl.querySelectorAll('.worktime-entry-note').forEach(noteEl => {
-            const noteDisplay = noteEl.querySelector('.note-display');
-            const noteInput = noteEl.querySelector('.note-input');
-            const sessionId = noteEl.dataset.id;
-
-            // Click on note container to edit (anywhere in the box)
-            noteEl.addEventListener('click', (e) => {
-                e.stopPropagation();
-
-                // If already editing, don't do anything (let the input handle interaction)
-                if (!noteInput.classList.contains('hidden')) return;
-
-                noteDisplay.classList.add('hidden');
-                noteInput.classList.remove('hidden');
-                noteInput.focus();
-                noteInput.select();
-            });
-
-            // Save on blur
-            noteInput.addEventListener('blur', () => {
-                saveSessionNote(sessionId, noteInput.value);
-            });
-
-            // Save on Enter, cancel on Escape
-            noteInput.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    noteInput.blur();
-                } else if (e.key === 'Escape') {
-                    const session = workTimeSessions.find(s => s.id === sessionId);
-                    noteInput.value = session?.note || '';
-                    noteInput.blur();
-                }
-            });
-        });
-    }
-
-    function saveSessionNote(sessionId, note) {
-        const session = workTimeSessions.find(s => s.id === sessionId);
-        if (session) {
-            session.note = note.trim();
-            saveData();
-            renderWorktimeEntries();
-            if (note.trim()) {
-                showToast(t('toastNoteSaved'), 'success');
-            }
-        }
-    }
-
-    function clearAllWorktime() {
-        if (workTimeSessions.length === 0) return;
-        workTimeSessions = [];
-        saveData();
-        renderWorktimeEntries();
-        showToast(t('toastAllEntriesDeleted'), 'info');
-    }
-
-    // ============ ARCHIVE FUNCTIONS ============
-
-    function archiveDoneTasks() {
-        const doneTasks = tasks.filter(t => t.status === 'done');
-
-        if (doneTasks.length === 0) {
-            showToast(t('toastNoDoneTasksToArchive'), 'info');
-            return;
-        }
-
-        // Archive each done task with its full history
-        doneTasks.forEach(task => {
-            archivedTaskLogs.push({
-                id: task.id,
-                content: task.content,
-                priority: task.priority,
-                additionalInfo: task.additionalInfo || '',
-                createdAt: task.createdAt || parseInt(task.id),
-                archivedAt: Date.now(),
-                history: task.history || []
-            });
-        });
-
-        // Remove done tasks from active tasks
-        tasks = tasks.filter(t => t.status !== 'done');
-
-        saveData();
-        renderTasks();
-        showToast(`${doneTasks.length} ${t('toastArchived')}`, 'success');
-    }
-
-    function openArchiveLogsModal() {
-        const archiveLogsModal = document.getElementById('archive-logs-modal');
-        const archiveSearchInput = document.getElementById('archive-search-input');
-
-        // Reset filters
-        archivePriorityFilter = 'all';
-        archiveTimeFilter = 'all';
-
-        // Reset filter UI
-        document.querySelectorAll('.archive-filter-btn').forEach(btn => {
-            btn.classList.remove('active');
-            if (btn.dataset.priority === 'all' || btn.dataset.time === 'all') {
-                btn.classList.add('active');
-            }
-        });
-
-        // Reset search
-        archiveSearchInput.value = '';
-
-        renderArchiveLogs('');
-        archiveLogsModal.classList.remove('hidden');
-        requestAnimationFrame(() => {
-            archiveLogsModal.classList.add('visible');
-        });
-        setTimeout(() => {
-            archiveSearchInput.focus();
-        }, 100);
-    }
-
-    function closeArchiveLogsModal() {
-        const archiveLogsModal = document.getElementById('archive-logs-modal');
-        archiveLogsModal.classList.remove('visible');
-        setTimeout(() => {
-            archiveLogsModal.classList.add('hidden');
-        }, 300);
-    }
-
-    // Fuzzy search like Obsidian - all characters must be present (not in order)
-
-
-    function renderArchiveLogs(searchQuery) {
-        const archiveLogsEntriesEl = document.getElementById('archive-logs-entries');
-        archiveLogsEntriesEl.innerHTML = '';
-
-        // Get current filter values
-        const now = Date.now();
-        const todayStart = new Date();
-        todayStart.setHours(0, 0, 0, 0);
-        const weekAgo = now - (7 * 24 * 60 * 60 * 1000);
-        const monthAgo = now - (30 * 24 * 60 * 60 * 1000);
-
-        // Filter by fuzzy search, priority, and time
-        const filteredLogs = archivedTaskLogs.filter(log => {
-            // Fuzzy search filter
-            const matchesSearch = fuzzyMatch(searchQuery, log.content) ||
-                fuzzyMatch(searchQuery, log.additionalInfo || '');
-
-            // Priority filter
-            const matchesPriority = archivePriorityFilter === 'all' ||
-                (log.priority || 'medium') === archivePriorityFilter;
-
-            // Time filter
-            let matchesTime = true;
-            if (archiveTimeFilter === 'today') {
-                matchesTime = log.archivedAt >= todayStart.getTime();
-            } else if (archiveTimeFilter === 'week') {
-                matchesTime = log.archivedAt >= weekAgo;
-            } else if (archiveTimeFilter === 'month') {
-                matchesTime = log.archivedAt >= monthAgo;
-            }
-
-            return matchesSearch && matchesPriority && matchesTime;
-        });
-
-        if (filteredLogs.length === 0) {
-            archiveLogsEntriesEl.innerHTML = `
-                <div class="archive-empty-state">
-                    ${icons.archive}
-                    <div>${t('noArchivedLogs')}</div>
-                </div>
-            `;
-            return;
-        }
-
-        // Sort by archivedAt descending (newest first)
-        const sortedLogs = [...filteredLogs].sort((a, b) => b.archivedAt - a.archivedAt);
-
-        sortedLogs.forEach(log => {
-            const entry = document.createElement('div');
-            entry.className = 'archive-log-entry';
-
-            // Build history HTML
-            let historyHtml = '';
-            if (log.history && log.history.length > 0) {
-                historyHtml = `
-                    <div class="archive-log-history">
-                        <div class="archive-log-history-title">${t('statusHistory')}</div>
-                        ${log.history.map(h => `
-                            <div class="archive-log-history-entry">
-                                ${icons.arrow} ${getStatusLabel(h.status)} - ${formatDateTime(h.timestamp)}
-                            </div>
-                        `).join('')}
-                    </div>
-                `;
-            }
-
-            entry.innerHTML = `
-                <div class="archive-log-content">${escapeHtml(log.content)}</div>
-                <div class="archive-log-meta">
-                    <span>${icons.calendar} ${t('completedAt')}: ${formatDateTime(log.archivedAt)}</span>
-                    <span class="task-priority priority-${log.priority || 'medium'}">${getPriorityLabel(log.priority)}</span>
-                </div>
-                ${log.additionalInfo ? `<div class="task-additional-info">${icons.info} ${escapeHtml(log.additionalInfo)}</div>` : ''}
-                ${historyHtml}
-            `;
-
-            archiveLogsEntriesEl.appendChild(entry);
-        });
+        }, TOAST_DURATION_MS);
     }
 
     // ============ CLEAR CLIPBOARD FUNCTION ============
@@ -1564,6 +1141,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // ============ EVENT LISTENERS ============
 
     function setupEventListeners() {
+        // Set up event delegation for dynamic content
+        setupClipboardDelegation();
+        setupTaskDelegation();
+
         // Add task button
         addTaskBtn.addEventListener('click', openAddModal);
 
@@ -1724,7 +1305,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 showToast(t('toastTaskUpdated'), 'success');
             } else {
                 const newTask = {
-                    id: Date.now().toString(),
+                    id: generateId(),
                     content: content,
                     status: 'todo',
                     priority: selectedPriority,
@@ -1793,7 +1374,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const activeEl = document.activeElement;
             const isInInput = activeEl.tagName === 'TEXTAREA' || activeEl.tagName === 'INPUT';
 
-            const items = e.clipboardData.items;
+            const items = e.clipboardData?.items;
+            if (!items) return;
+
             let hasImage = false;
 
             for (let item of items) {
@@ -1809,9 +1392,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             if (!isInInput && !hasImage) {
-                const text = e.clipboardData.getData('text');
-                if (text.trim()) {
-                    addClipboardItem(text, 'text');
+                const text = e.clipboardData?.getData('text');
+                if (text && text.trim()) {
+                    e.preventDefault();
+                    addClipboardItem(text.trim(), 'text');
                     showToast(t('toastTextSaved'), 'success');
                 }
             }
@@ -1840,52 +1424,39 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
+            // ESC to close modals (check in order of priority)
             if (e.key === 'Escape') {
-                if (!modal.classList.contains('hidden')) {
+                const confirmModal = document.getElementById('confirm-modal');
+                const archiveLogsModal = document.getElementById('archive-logs-modal');
+                
+                if (!confirmModal.classList.contains('hidden')) {
+                    closeConfirmModal();
+                } else if (!modal.classList.contains('hidden')) {
                     closeModal();
                 } else if (!infoModal.classList.contains('hidden')) {
                     closeInfoModal();
                 } else if (!settingsModal.classList.contains('hidden')) {
                     closeSettingsModal();
+                } else if (!archiveLogsModal.classList.contains('hidden')) {
+                    archiveService.closeModal();
                 }
                 // TimeTracker modal handled by module
             }
+            // Ctrl+B to open new task modal
             if (e.key === 'b' && e.ctrlKey) {
                 e.preventDefault();
                 openAddModal();
             }
         });
 
-        // Time Tracker Event Listeners - now handled by TimeTracker module
-
-        // Global paste handler - capture Ctrl+V anywhere on the page
-        document.addEventListener('paste', (e) => {
-            // Don't capture if in an input field
-            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
-                return;
-            }
-
-            const items = e.clipboardData?.items;
-            if (!items) return;
-
-            for (const item of items) {
-                if (item.type.startsWith('image/')) {
-                    const blob = item.getAsFile();
-                    if (blob) {
-                        handleImageFromBlob(blob);
-                    }
+        // Keyboard support for close buttons (Enter/Space)
+        document.querySelectorAll('.close-btn').forEach(btn => {
+            btn.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
-                    return;
+                    btn.click();
                 }
-            }
-
-            // Handle text
-            const text = e.clipboardData?.getData('text');
-            if (text && text.trim()) {
-                addClipboardItem(text.trim(), 'text');
-                showToast(t('toastPastedToClipboard'), 'success');
-                e.preventDefault();
-            }
+            });
         });
 
         // Settings Modal Events
@@ -1933,7 +1504,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function setupDragAndDrop() {
         const columns = document.querySelectorAll('.column');
         let lastDragOverTime = 0;
-        const THROTTLE_MS = 50;
 
         columns.forEach(column => {
             const taskList = column.querySelector('.task-list');
@@ -1945,7 +1515,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Throttle DOM manipulation to prevent flickering
                 const now = Date.now();
-                if (now - lastDragOverTime < THROTTLE_MS) return;
+                if (now - lastDragOverTime < DRAG_THROTTLE_MS) return;
                 lastDragOverTime = now;
 
                 const afterElement = getDragAfterElement(taskList, e.clientY);

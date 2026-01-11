@@ -4,7 +4,7 @@
  */
 
 import { t } from '../utils/i18n.js';
-import { escapeHtml } from '../utils/helpers.js';
+import { escapeHtml, generateId } from '../utils/helpers.js';
 import { ICONS } from '../config/icons.js';
 
 export class TimeTracker {
@@ -117,7 +117,7 @@ export class TimeTracker {
 
         // Save session
         const session = {
-            id: Date.now().toString(),
+            id: generateId(),
             startTime: this.state.startTime,
             endTime: endTime,
             duration: duration,

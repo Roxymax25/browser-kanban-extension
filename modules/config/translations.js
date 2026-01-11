@@ -33,6 +33,7 @@ export const TRANSLATIONS = {
         save: 'Speichern',
         delete: 'Löschen',
         cancel: 'Abbrechen',
+        close: 'Schließen',
 
         // Info Modal
         additionalInfo: 'Zusätzliche Info',
@@ -77,6 +78,7 @@ export const TRANSLATIONS = {
 
         // Toast Messages
         toastCopied: 'In Zwischenablage kopiert!',
+        toastCopyFailed: 'Kopieren fehlgeschlagen - bitte manuell kopieren',
         toastTaskDeleted: 'Aufgabe gelöscht',
         toastTaskUpdated: 'Aufgabe aktualisiert',
         toastTaskAdded: 'Aufgabe hinzugefügt',
@@ -183,6 +185,7 @@ export const TRANSLATIONS = {
         save: 'Save',
         delete: 'Delete',
         cancel: 'Cancel',
+        close: 'Close',
 
         // Info Modal
         additionalInfo: 'Additional Info',
@@ -227,6 +230,7 @@ export const TRANSLATIONS = {
 
         // Toast Messages
         toastCopied: 'Copied to clipboard!',
+        toastCopyFailed: 'Copy failed - please copy manually',
         toastTaskDeleted: 'Task deleted',
         toastTaskUpdated: 'Task updated',
         toastTaskAdded: 'Task added',
