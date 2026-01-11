@@ -1,7 +1,11 @@
 import { ICONS as icons } from './modules/config/icons.js';
+import { COLOR_PALETTES } from './modules/config/colorPalettes.js';
 import { StorageService } from './modules/services/storage.js';
-import { t, setLanguage } from './modules/utils/i18n.js';
-import { formatDateTime, formatDate, formatDuration, fuzzyMatch, escapeHtml } from './modules/utils/helpers.js';
+import { t, setLanguage, getLanguage } from './modules/utils/i18n.js';
+import { formatDateTime, formatDate, fuzzyMatch, escapeHtml } from './modules/utils/helpers.js';
+import { TimeTracker } from './modules/ui/TimeTracker.js';
+import { ClipboardPanel } from './modules/ui/ClipboardPanel.js';
+import { ArchiveService } from './modules/services/ArchiveService.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     // SVG Icon templates
@@ -39,18 +43,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const taskHistorySection = document.getElementById('task-history-section');
     const taskHistoryList = document.getElementById('task-history-list');
 
-    // DOM Elements - Time Tracker
-    const trackerTimeEl = document.getElementById('tracker-time');
-    const trackerDisplay = document.querySelector('.tracker-display');
-    const trackerStartBtn = document.getElementById('tracker-start-btn');
-    const trackerPauseBtn = document.getElementById('tracker-pause-btn');
-    const trackerLogBtn = document.getElementById('tracker-log-btn');
-    const worktimeModal = document.getElementById('worktime-modal');
-    const worktimeCloseBtn = document.querySelector('.worktime-close-btn');
-    const worktimeEntriesEl = document.getElementById('worktime-entries');
-    const worktimeSummaryEl = document.getElementById('worktime-summary');
-    const clearWorktimeBtn = document.getElementById('clear-worktime-btn');
-
     // DOM Elements - Info Modal
     const infoModal = document.getElementById('info-modal');
     const infoCloseBtn = document.querySelector('.info-close-btn');
@@ -74,20 +66,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let editingTaskId = null;
     let editingInfoTaskId = null;
     let selectedPriority = 'medium';
-    let archivedTaskLogs = [];
-    let archivePriorityFilter = 'all';
-    let archiveTimeFilter = 'all';
-
-    // Time Tracker State
-    let workTimeSessions = [];
-    let timeTracker = {
-        isRunning: false,
-        isPaused: false,
-        startTime: null,
-        pauseStartTime: null,
-        totalPausedTime: 0
-    };
-    let trackerInterval = null;
 
     // Settings State
     let selectedPalette = 'sunset-orange';
@@ -95,108 +73,48 @@ document.addEventListener('DOMContentLoaded', () => {
     let selectedTheme = 'dark';
     let confirmResolve = null;
 
-    // Get translation helper
+    // Color Palettes now imported from './modules/config/colorPalettes.js'
+    const colorPalettes = COLOR_PALETTES;
 
+    // ============ MODULE INSTANCES ============
 
-    // Color Palettes Definition
-    const colorPalettes = {
-        'sunset-orange': {
-            name: 'Sunset Orange',
-            accent1: '#e85d04',
-            accent2: '#dc2f02',
-            accent3: '#f48c06',
-            accentSoft: 'rgba(232, 93, 4, 0.15)',
-            accentGradient: 'linear-gradient(135deg, #e85d04 0%, #dc2f02 100%)',
-            todoColor: '#dc2f02',
-            progressColor: '#f48c06',
-            doneColor: '#38b000',
-            clipboardColor: '#e85d04',
-            shadowGlow: '0 0 40px rgba(232, 93, 4, 0.2)',
-            scrollbarThumb: 'rgba(232, 93, 4, 0.4)',
-            scrollbarHover: 'rgba(232, 93, 4, 0.6)',
-            logoFilter: 'hue-rotate(0deg)'
-        },
-        'ocean-blue': {
-            name: 'Ocean Blue',
-            accent1: '#0077b6',
-            accent2: '#0096c7',
-            accent3: '#00b4d8',
-            accentSoft: 'rgba(0, 119, 182, 0.15)',
-            accentGradient: 'linear-gradient(135deg, #0077b6 0%, #0096c7 100%)',
-            todoColor: '#0077b6',
-            progressColor: '#00b4d8',
-            doneColor: '#38b000',
-            clipboardColor: '#0096c7',
-            shadowGlow: '0 0 40px rgba(0, 119, 182, 0.2)',
-            scrollbarThumb: 'rgba(0, 119, 182, 0.4)',
-            scrollbarHover: 'rgba(0, 119, 182, 0.6)',
-            logoFilter: 'hue-rotate(180deg)'
-        },
-        'forest-green': {
-            name: 'Forest Green',
-            accent1: '#2d6a4f',
-            accent2: '#40916c',
-            accent3: '#52b788',
-            accentSoft: 'rgba(45, 106, 79, 0.15)',
-            accentGradient: 'linear-gradient(135deg, #2d6a4f 0%, #40916c 100%)',
-            todoColor: '#2d6a4f',
-            progressColor: '#52b788',
-            doneColor: '#74c69d',
-            clipboardColor: '#40916c',
-            shadowGlow: '0 0 40px rgba(45, 106, 79, 0.2)',
-            scrollbarThumb: 'rgba(45, 106, 79, 0.4)',
-            scrollbarHover: 'rgba(45, 106, 79, 0.6)',
-            logoFilter: 'hue-rotate(120deg)'
-        },
-        'royal-purple': {
-            name: 'Royal Purple',
-            accent1: '#7b2cbf',
-            accent2: '#9d4edd',
-            accent3: '#c77dff',
-            accentSoft: 'rgba(123, 44, 191, 0.15)',
-            accentGradient: 'linear-gradient(135deg, #7b2cbf 0%, #9d4edd 100%)',
-            todoColor: '#9d4edd',
-            progressColor: '#c77dff',
-            doneColor: '#38b000',
-            clipboardColor: '#7b2cbf',
-            shadowGlow: '0 0 40px rgba(123, 44, 191, 0.2)',
-            scrollbarThumb: 'rgba(123, 44, 191, 0.4)',
-            scrollbarHover: 'rgba(123, 44, 191, 0.6)',
-            logoFilter: 'hue-rotate(270deg)'
-        },
-        'cherry-blossom': {
-            name: 'Cherry Blossom',
-            accent1: '#ff758f',
-            accent2: '#ff4d6d',
-            accent3: '#ffb3c1',
-            accentSoft: 'rgba(255, 117, 143, 0.15)',
-            accentGradient: 'linear-gradient(135deg, #ff758f 0%, #ff4d6d 100%)',
-            todoColor: '#ff4d6d',
-            progressColor: '#ffb3c1',
-            doneColor: '#38b000',
-            clipboardColor: '#ff758f',
-            shadowGlow: '0 0 40px rgba(255, 117, 143, 0.2)',
-            scrollbarThumb: 'rgba(255, 117, 143, 0.4)',
-            scrollbarHover: 'rgba(255, 117, 143, 0.6)',
-            logoFilter: 'hue-rotate(330deg)'
-        },
-        'midnight-gold': {
-            name: 'Midnight Gold',
-            accent1: '#fca311',
-            accent2: '#e5a000',
-            accent3: '#ffbe0b',
-            accentSoft: 'rgba(252, 163, 17, 0.15)',
-            accentGradient: 'linear-gradient(135deg, #fca311 0%, #e5a000 100%)',
-            todoColor: '#e5a000',
-            progressColor: '#ffbe0b',
-            doneColor: '#38b000',
-            clipboardColor: '#fca311',
-            shadowGlow: '0 0 40px rgba(252, 163, 17, 0.2)',
-            scrollbarThumb: 'rgba(252, 163, 17, 0.4)',
-            scrollbarHover: 'rgba(252, 163, 17, 0.6)',
-            logoFilter: 'hue-rotate(30deg)'
+    // TimeTracker Module
+    const timeTrackerModule = new TimeTracker({
+        onSave: saveData,
+        showToast: showToast,
+        getLanguage: () => selectedLanguage
+    });
+
+    // ClipboardPanel Module
+    const clipboardPanel = new ClipboardPanel({
+        onSave: saveData,
+        showToast: showToast,
+        onCreateTask: (content) => {
+            const newTask = {
+                id: Date.now().toString(),
+                content: content,
+                status: 'todo',
+                priority: 'medium',
+                createdAt: Date.now(),
+                history: []
+            };
+            tasks.push(newTask);
+            saveData();
+            renderTasks();
         }
-    };
+    });
+    clipboardPanel.setConfirmModal(showConfirmModal);
+
+    // ArchiveService Module
+    const archiveService = new ArchiveService({
+        onSave: saveData,
+        showToast: showToast,
+        getTasks: () => tasks,
+        setTasks: (newTasks) => { tasks = newTasks; },
+        renderTasks: renderTasks,
+        getStatusLabel: getStatusLabel,
+        getPriorityLabel: getPriorityLabel
+    });
 
     // Initialize
     init();
@@ -214,15 +132,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (result.tasks) tasks = result.tasks;
         if (result.clipboardItems) clipboardItems = result.clipboardItems;
-        if (result.workTimeSessions) workTimeSessions = result.workTimeSessions;
-        if (result.archivedTaskLogs) archivedTaskLogs = result.archivedTaskLogs;
 
+        // Initialize modules with stored data
+        clipboardPanel.setItems(result.clipboardItems || []);
+        timeTrackerModule.setSessions(result.workTimeSessions || []);
+        archiveService.setArchivedLogs(result.archivedTaskLogs || []);
+
+        // Restore time tracker state if running
         if (result.timeTracker && result.timeTracker.isRunning) {
-            timeTracker = result.timeTracker;
-            resumeTrackerFromStorage();
+            timeTrackerModule.setState(result.timeTracker);
+            timeTrackerModule.resumeFromStorage();
         }
 
-        // Settings from storage if available (handling newer version structure)
+        // Settings from storage if available
         if (result.settings) {
             if (result.settings.theme) selectedTheme = result.settings.theme;
             if (result.settings.language) selectedLanguage = result.settings.language;
@@ -248,9 +170,9 @@ document.addEventListener('DOMContentLoaded', () => {
         StorageService.saveData({
             tasks: tasks,
             clipboardItems: clipboardItems,
-            workTimeSessions: workTimeSessions,
-            timeTracker: timeTracker,
-            archivedTaskLogs: archivedTaskLogs
+            workTimeSessions: timeTrackerModule.getSessions(),
+            timeTracker: timeTrackerModule.getState(),
+            archivedTaskLogs: archiveService.getArchivedLogs()
         });
     }
 
@@ -989,7 +911,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Time tracker buttons
-        if (!timeTracker.isRunning) {
+        const trackerStartBtn = document.getElementById('tracker-start-btn');
+        const trackerLogBtn = document.getElementById('tracker-log-btn');
+        if (trackerStartBtn && !timeTrackerModule.getState().isRunning) {
             trackerStartBtn.innerHTML = `
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -998,16 +922,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 ${t('start')}
             `;
         }
-        trackerLogBtn.innerHTML = `
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                <polyline points="14 2 14 8 20 8"></polyline>
-                <line x1="16" y1="13" x2="8" y2="13"></line>
-                <line x1="16" y1="17" x2="8" y2="17"></line>
-            </svg>
-            ${t('log')}
-        `;
+        if (trackerLogBtn) {
+            trackerLogBtn.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                </svg>
+                ${t('log')}
+            `;
+        }
 
         // Settings modal
         document.querySelector('#settings-modal h2').innerHTML = `
@@ -1645,62 +1571,74 @@ document.addEventListener('DOMContentLoaded', () => {
         const exportDoneBtn = document.getElementById('export-done-btn');
         exportDoneBtn.addEventListener('click', exportDoneTasks);
 
-        // Archive done tasks button
+        // Archive done tasks button - use module
         const archiveDoneBtn = document.getElementById('archive-done-btn');
-        archiveDoneBtn.addEventListener('click', archiveDoneTasks);
+        archiveDoneBtn.addEventListener('click', () => archiveService.archiveDoneTasks());
 
-        // Clear clipboard button
-        const clearClipboardBtn = document.getElementById('clear-clipboard-btn');
-        clearClipboardBtn.addEventListener('click', clearAllClipboard);
+        // Clear clipboard button - handled by ClipboardPanel module
 
-        // Archive logs modal
-        const archiveLogsModal = document.getElementById('archive-logs-modal');
-        const archiveLogsCloseBtn = document.querySelector('.archive-logs-close-btn');
-        const archiveSearchInput = document.getElementById('archive-search-input');
-
-        archiveLogsCloseBtn.addEventListener('click', closeArchiveLogsModal);
-        archiveLogsModal.addEventListener('click', (e) => {
-            if (e.target === archiveLogsModal) closeArchiveLogsModal();
-        });
-
-        // Fuzzy search input
-        archiveSearchInput.addEventListener('input', (e) => {
-            renderArchiveLogs(e.target.value);
-        });
-
-        // Priority filter buttons
-        const priorityFilterBtns = document.querySelectorAll('#archive-priority-filter .archive-filter-btn');
-        priorityFilterBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                priorityFilterBtns.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                archivePriorityFilter = btn.dataset.priority;
-                renderArchiveLogs(archiveSearchInput.value);
-            });
-        });
-
-        // Time filter buttons
-        const timeFilterBtns = document.querySelectorAll('#archive-time-filter .archive-filter-btn');
-        timeFilterBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                timeFilterBtns.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                archiveTimeFilter = btn.dataset.time;
-                renderArchiveLogs(archiveSearchInput.value);
-            });
-        });
+        // Archive logs modal - events now handled by ArchiveService module
 
         // Double-click on archive button opens logs (single click archives)
         archiveDoneBtn.addEventListener('dblclick', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            openArchiveLogsModal();
+            archiveService.openModal();
         });
 
         // Right-click on archive button opens logs
         archiveDoneBtn.addEventListener('contextmenu', (e) => {
             e.preventDefault();
-            openArchiveLogsModal();
+            archiveService.openModal();
+        });
+
+        // Column drag-and-drop events
+        const columns = document.querySelectorAll('.column');
+        columns.forEach(column => {
+            let dragCounter = 0;
+
+            column.addEventListener('dragenter', (e) => {
+                e.preventDefault();
+                dragCounter++;
+                if (dragCounter === 1) {
+                    column.classList.add('drag-over');
+                }
+            });
+
+            column.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+            });
+
+            column.addEventListener('dragleave', (e) => {
+                dragCounter--;
+                if (dragCounter === 0) {
+                    column.classList.remove('drag-over');
+                }
+            });
+
+            column.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dragCounter = 0;
+                column.classList.remove('drag-over');
+
+                if (!currentDragItem) return;
+
+                const newStatus = column.dataset.status;
+                if (currentDragItem.status !== newStatus) {
+                    // Add to history
+                    if (!currentDragItem.history) currentDragItem.history = [];
+                    currentDragItem.history.push({
+                        status: newStatus,
+                        timestamp: Date.now()
+                    });
+
+                    currentDragItem.status = newStatus;
+                    saveData();
+                    renderTasks();
+                    showToast(`${t('toastMovedTo')} ${getStatusLabel(newStatus)}`, 'success');
+                }
+            });
         });
 
         // Modal close
@@ -1907,11 +1845,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     closeModal();
                 } else if (!infoModal.classList.contains('hidden')) {
                     closeInfoModal();
-                } else if (!worktimeModal.classList.contains('hidden')) {
-                    closeWorktimeModal();
                 } else if (!settingsModal.classList.contains('hidden')) {
                     closeSettingsModal();
                 }
+                // TimeTracker modal handled by module
             }
             if (e.key === 'b' && e.ctrlKey) {
                 e.preventDefault();
@@ -1919,31 +1856,37 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Time Tracker Event Listeners
-        trackerStartBtn.addEventListener('click', () => {
-            if (timeTracker.isRunning) {
-                stopTracker();
-            } else {
-                startTracker();
+        // Time Tracker Event Listeners - now handled by TimeTracker module
+
+        // Global paste handler - capture Ctrl+V anywhere on the page
+        document.addEventListener('paste', (e) => {
+            // Don't capture if in an input field
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+                return;
+            }
+
+            const items = e.clipboardData?.items;
+            if (!items) return;
+
+            for (const item of items) {
+                if (item.type.startsWith('image/')) {
+                    const blob = item.getAsFile();
+                    if (blob) {
+                        handleImageFromBlob(blob);
+                    }
+                    e.preventDefault();
+                    return;
+                }
+            }
+
+            // Handle text
+            const text = e.clipboardData?.getData('text');
+            if (text && text.trim()) {
+                addClipboardItem(text.trim(), 'text');
+                showToast(t('toastPastedToClipboard'), 'success');
+                e.preventDefault();
             }
         });
-
-        trackerPauseBtn.addEventListener('click', () => {
-            if (timeTracker.isPaused) {
-                resumeTracker();
-            } else {
-                pauseTracker();
-            }
-        });
-
-        trackerLogBtn.addEventListener('click', openWorktimeModal);
-
-        // Worktime Modal Events
-        worktimeCloseBtn.addEventListener('click', closeWorktimeModal);
-        worktimeModal.addEventListener('click', (e) => {
-            if (e.target === worktimeModal) closeWorktimeModal();
-        });
-        clearWorktimeBtn.addEventListener('click', clearAllWorktime);
 
         // Settings Modal Events
         settingsBtn.addEventListener('click', openSettingsModal);
@@ -1989,22 +1932,38 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function setupDragAndDrop() {
         const columns = document.querySelectorAll('.column');
+        let lastDragOverTime = 0;
+        const THROTTLE_MS = 50;
 
         columns.forEach(column => {
             const taskList = column.querySelector('.task-list');
+            let lastAfterElement = null;
 
             column.addEventListener('dragover', (e) => {
                 e.preventDefault();
                 column.classList.add('drag-over');
 
+                // Throttle DOM manipulation to prevent flickering
+                const now = Date.now();
+                if (now - lastDragOverTime < THROTTLE_MS) return;
+                lastDragOverTime = now;
+
                 const afterElement = getDragAfterElement(taskList, e.clientY);
                 const draggable = document.querySelector('.dragging');
 
                 if (draggable) {
-                    if (afterElement == null) {
-                        taskList.appendChild(draggable);
-                    } else {
-                        taskList.insertBefore(draggable, afterElement);
+                    // Only manipulate DOM if position actually changed
+                    if (afterElement !== lastAfterElement || draggable.parentNode !== taskList) {
+                        lastAfterElement = afterElement;
+                        if (afterElement == null) {
+                            if (draggable.nextElementSibling !== null || draggable.parentNode !== taskList) {
+                                taskList.appendChild(draggable);
+                            }
+                        } else {
+                            if (draggable.nextElementSibling !== afterElement) {
+                                taskList.insertBefore(draggable, afterElement);
+                            }
+                        }
                     }
                 }
             });
@@ -2012,12 +1971,14 @@ document.addEventListener('DOMContentLoaded', () => {
             column.addEventListener('dragleave', (e) => {
                 if (!column.contains(e.relatedTarget)) {
                     column.classList.remove('drag-over');
+                    lastAfterElement = null;
                 }
             });
 
             column.addEventListener('drop', (e) => {
                 e.preventDefault();
                 column.classList.remove('drag-over');
+                lastAfterElement = null;
 
                 const newStatus = column.dataset.status;
                 if (currentDragItem && currentDragItem.status !== newStatus) {

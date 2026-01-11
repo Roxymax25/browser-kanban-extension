@@ -61,6 +61,31 @@ export const StorageService = {
     },
 
     /**
+     * Load just settings
+     * @returns {Promise<Object>}
+     */
+    loadSettings: () => {
+        return new Promise((resolve) => {
+            if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+                chrome.storage.local.get(['settings'], (result) => {
+                    resolve(result.settings || {});
+                });
+            } else {
+                const item = localStorage.getItem('settings');
+                if (item) {
+                    try {
+                        resolve(JSON.parse(item));
+                    } catch (e) {
+                        resolve({});
+                    }
+                } else {
+                    resolve({});
+                }
+            }
+        });
+    },
+
+    /**
      * Save just settings
      * @param {Object} settings 
      */

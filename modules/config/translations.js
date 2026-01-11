@@ -146,7 +146,8 @@ export const TRANSLATIONS = {
         toastUnpinned: 'Pin gelöst',
 
         // Clear Clipboard
-        tooltipClearClipboard: 'Zwischenablage leeren'
+        tooltipClearClipboard: 'Zwischenablage leeren',
+        toastPastedToClipboard: 'In Zwischenablage eingefügt'
     },
     en: {
         // Header
@@ -295,6 +296,7 @@ export const TRANSLATIONS = {
         toastUnpinned: 'Task unpinned',
 
         // Clear Clipboard
-        tooltipClearClipboard: 'Clear clipboard'
+        tooltipClearClipboard: 'Clear clipboard',
+        toastPastedToClipboard: 'Pasted to clipboard'
     }
 };
