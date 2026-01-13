@@ -2,7 +2,7 @@
 
 A Chrome Extension for personal task and clipboard management with a modern dark-theme design.
 
-![Version](https://img.shields.io/badge/version-3.2-orange)
+![Version](https://img.shields.io/badge/version-3.3-orange)
 ![Chrome](https://img.shields.io/badge/chrome-extension-green)
 
 ## Features
@@ -35,11 +35,21 @@ A Chrome Extension for personal task and clipboard management with a modern dark
 - **Total Time**: Automatic calculation of total work time
 - **Persistence**: Timer continues even when tab is closed
 
+### Cloud Sync (NEW in v3.3)
+
+- **WebDAV/Nextcloud**: Sync data across devices via WebDAV servers
+- **Encrypted Storage**: Passwords are encrypted locally with AES-GCM
+- **Auto Sync**: Changes are automatically uploaded after 1 second
+- **Tab Focus Sync**: Checks for remote updates when tab regains focus
+- **Conflict Resolution**: Newest data wins (timestamp-based)
+- **Offline Support**: Works offline, syncs when connection is restored
+
 ### Settings
 
 - **Language**: Switch between German and English
 - **Theme**: Dark and Light mode
 - **Color Palettes**: Choose from 6 different color themes
+- **Cloud Sync**: Configure WebDAV server for cross-device sync
 
 ### Export & Archive
 
@@ -106,7 +116,12 @@ ChromePlugin_Notes/
     │   └── translations.js    # i18n translations (DE/EN)
     ├── services/
     │   ├── storage.js         # Chrome storage abstraction
-    │   └── ArchiveService.js  # Task archive management
+    │   ├── ArchiveService.js  # Task archive management
+    │   └── sync/              # Cloud sync module
+    │       ├── SyncService.js     # Sync orchestrator
+    │       ├── WebDAVProvider.js  # WebDAV implementation
+    │       ├── BaseSyncProvider.js # Provider base class
+    │       └── crypto.js          # Password encryption
     ├── ui/
     │   ├── ClipboardPanel.js  # Clipboard UI module
     │   └── TimeTracker.js     # Work time tracker module
@@ -123,6 +138,13 @@ ChromePlugin_Notes/
 - **Lucide Icons** (inline SVG)
 
 ## Version History
+
+### v3.3 (January 2026)
+- **Cloud Sync**: WebDAV/Nextcloud synchronization for cross-device usage
+- **Encrypted Passwords**: AES-GCM encryption for stored credentials
+- **Tab Focus Sync**: Auto-checks for remote updates when returning to tab
+- **Real-time Upload**: Changes synced after 1 second debounce
+- **Conflict Resolution**: Timestamp-based "newest wins" strategy
 
 ### v3.2 (January 2026)
 - **Code Quality**: Major refactoring with 21% code reduction
@@ -145,7 +167,11 @@ ChromePlugin_Notes/
 
 ## Privacy
 
-All data is stored **locally only** on your device using Chrome's Storage API. No data is transmitted to external servers. See [PRIVACY.md](PRIVACY.md) for details.
+All data is stored **locally only** on your device using Chrome's Storage API. 
+
+**Cloud Sync (optional)**: If enabled, data is synced to your own WebDAV server (e.g., Nextcloud). Passwords are encrypted locally before storage. No data is ever sent to third-party servers.
+
+See [PRIVACY.md](PRIVACY.md) for details.
 
 ## License
 

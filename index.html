@@ -91,6 +91,41 @@
             </div>
         </div>
         <div class="header-right">
+            <!-- Sync Status Indicator -->
+            <div id="sync-indicator" class="sync-indicator hidden" title="Sync Status">
+                <!-- Idle/Connected Icon -->
+                <svg id="sync-icon-idle" class="sync-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+                </svg>
+                <!-- Syncing Icon (animated) -->
+                <svg id="sync-icon-syncing" class="sync-icon hidden" xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+                </svg>
+                <!-- Error Icon -->
+                <svg id="sync-icon-error" class="sync-icon hidden" xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <!-- Offline Icon -->
+                <svg id="sync-icon-offline" class="sync-icon hidden" xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <line x1="1" y1="1" x2="23" y2="23"></line>
+                    <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"></path>
+                    <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"></path>
+                    <path d="M10.71 5.05A16 16 0 0 1 22.58 9"></path>
+                    <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"></path>
+                    <path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>
+                    <line x1="12" y1="20" x2="12.01" y2="20"></line>
+                </svg>
+            </div>
             <button id="settings-btn" class="settings-btn" title="Einstellungen" aria-label="Einstellungen">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -469,6 +504,62 @@
                             <span class="palette-color" style="background: #38b000;"></span>
                         </div>
                         <span class="palette-name">🌙 Midnight Gold</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cloud Sync Settings -->
+            <div class="form-group sync-settings-group">
+                <label class="form-label" data-i18n="settingsCloudSync">Cloud-Synchronisierung</label>
+                
+                <!-- Sync Enable Toggle -->
+                <div class="sync-toggle-container">
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="sync-enabled-toggle">
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <span class="sync-toggle-label" data-i18n="syncEnable">Synchronisierung aktivieren</span>
+                </div>
+
+                <!-- WebDAV Configuration (shown when enabled) -->
+                <div id="webdav-config" class="sync-config hidden">
+                    <div class="sync-input-group">
+                        <label data-i18n="syncServerUrl">Server URL</label>
+                        <input type="url" id="webdav-server" 
+                               placeholder="https://nextcloud.example.com/remote.php/dav/files/user/">
+                        <small class="sync-input-hint" data-i18n="syncServerUrlHint">z.B. https://cloud.example.com/remote.php/dav/files/username/</small>
+                    </div>
+                    <div class="sync-input-group">
+                        <label data-i18n="syncUsername">Benutzername</label>
+                        <input type="text" id="webdav-username" placeholder="username" autocomplete="username">
+                    </div>
+                    <div class="sync-input-group">
+                        <label data-i18n="syncPassword">Passwort</label>
+                        <input type="password" id="webdav-password" placeholder="••••••••" autocomplete="current-password">
+                        <small class="sync-input-hint" data-i18n="syncPasswordNote">Wird verschlüsselt lokal gespeichert</small>
+                    </div>
+                    <div class="sync-input-group">
+                        <label data-i18n="syncFilePath">Dateipfad</label>
+                        <input type="text" id="webdav-filepath" value="DashboardSync/dashboard-data.json" 
+                               placeholder="DashboardSync/dashboard-data.json">
+                        <small class="sync-input-hint" data-i18n="syncFilePathHint">Ordner wird automatisch erstellt</small>
+                    </div>
+                    <div class="sync-actions">
+                        <button id="webdav-test-btn" class="sync-btn secondary-btn" type="button">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                            </svg>
+                            <span data-i18n="syncTestConnection">Verbindung testen</span>
+                        </button>
+                    </div>
+                    <div id="sync-test-message" class="sync-test-message hidden"></div>
+                    
+                    <!-- Last sync info -->
+                    <div id="sync-last-info" class="sync-last-info hidden">
+                        <span data-i18n="syncLastSync">Letzte Synchronisierung:</span>
+                        <span id="sync-last-time"></span>
                     </div>
                 </div>
             </div>

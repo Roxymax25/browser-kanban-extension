@@ -2404,3 +2404,312 @@ body.light-mode .clipboard-panel {
     background: var(--done-color);
     color: white;
 }
+
+/* ============ SYNC INDICATOR STYLES ============ */
+
+.sync-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: var(--transition-normal);
+    margin-right: 8px;
+}
+
+.sync-indicator:hover {
+    background: var(--bg-tertiary);
+}
+
+.sync-indicator .sync-icon {
+    width: 18px;
+    height: 18px;
+    transition: var(--transition-normal);
+}
+
+.sync-indicator.sync-idle .sync-icon {
+    color: var(--success-color);
+}
+
+.sync-indicator.sync-syncing .sync-icon {
+    color: var(--accent-1);
+    animation: spin 1s linear infinite;
+}
+
+.sync-indicator.sync-error .sync-icon {
+    color: var(--danger-color);
+}
+
+.sync-indicator.sync-offline .sync-icon {
+    color: var(--text-muted);
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ============ SYNC SETTINGS STYLES ============ */
+
+.sync-settings-group {
+    margin-top: 24px;
+    padding-top: 24px;
+    border-top: 1px solid var(--glass-border);
+}
+
+.sync-toggle-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.sync-toggle-label {
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+/* Toggle Switch */
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 48px;
+    height: 26px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--bg-tertiary);
+    border: 1px solid var(--glass-border);
+    transition: var(--transition-normal);
+    border-radius: 26px;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 3px;
+    bottom: 2px;
+    background-color: var(--text-secondary);
+    transition: var(--transition-normal);
+    border-radius: 50%;
+}
+
+.toggle-switch input:checked + .toggle-slider {
+    background: var(--accent-gradient);
+    border-color: transparent;
+}
+
+.toggle-switch input:checked + .toggle-slider:before {
+    transform: translateX(20px);
+    background-color: white;
+}
+
+.toggle-switch input:focus + .toggle-slider {
+    box-shadow: 0 0 0 2px var(--accent-soft);
+}
+
+/* Sync Config Panel */
+.sync-config {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 16px;
+    background: var(--bg-tertiary);
+    border-radius: var(--border-radius-md);
+    border: 1px solid var(--glass-border);
+    margin-top: 8px;
+}
+
+.sync-config.hidden {
+    display: none;
+}
+
+.sync-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.sync-input-group label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.sync-input-group input {
+    padding: 10px 12px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-sm);
+    color: var(--text-primary);
+    font-size: 14px;
+    font-family: inherit;
+    transition: var(--transition-fast);
+}
+
+.sync-input-group input:focus {
+    outline: none;
+    border-color: var(--accent-1);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.sync-input-group input::placeholder {
+    color: var(--text-muted);
+}
+
+.sync-input-hint {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+/* Sync Actions */
+.sync-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.sync-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    transition: var(--transition-fast);
+    border: none;
+    font-family: inherit;
+}
+
+.sync-btn.secondary-btn {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--glass-border);
+}
+
+.sync-btn.secondary-btn:hover {
+    background: var(--bg-tertiary);
+    border-color: var(--accent-1);
+}
+
+.sync-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Sync Test Message */
+.sync-test-message {
+    padding: 10px 14px;
+    border-radius: var(--border-radius-sm);
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.sync-test-message.hidden {
+    display: none;
+}
+
+.sync-test-message.success {
+    background: rgba(56, 176, 0, 0.15);
+    color: var(--success-color);
+    border: 1px solid rgba(56, 176, 0, 0.3);
+}
+
+.sync-test-message.error {
+    background: rgba(208, 0, 0, 0.15);
+    color: var(--danger-color);
+    border: 1px solid rgba(208, 0, 0, 0.3);
+}
+
+/* Sync Last Info */
+.sync-last-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: var(--bg-secondary);
+    border-radius: var(--border-radius-sm);
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.sync-last-info.hidden {
+    display: none;
+}
+
+/* Sync Testing Spinner */
+.sync-testing-spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid var(--text-muted);
+    border-top-color: var(--accent-1);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+/* Light Mode Sync Styles */
+.light-mode .sync-indicator:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.light-mode .sync-config {
+    background: #f8f9fa;
+    border-color: rgba(0, 0, 0, 0.08);
+}
+
+.light-mode .sync-input-group input {
+    background: white;
+    border-color: rgba(0, 0, 0, 0.12);
+    color: #111827;
+}
+
+.light-mode .sync-input-group input:focus {
+    border-color: var(--accent-1);
+}
+
+.light-mode .sync-btn.secondary-btn {
+    background: white;
+    color: #111827;
+    border-color: rgba(0, 0, 0, 0.12);
+}
+
+.light-mode .sync-btn.secondary-btn:hover {
+    background: #f3f4f6;
+    border-color: var(--accent-1);
+}
+
+.light-mode .sync-last-info {
+    background: #f3f4f6;
+}
+
+.light-mode .toggle-slider {
+    background-color: #e5e7eb;
+    border-color: #d1d5db;
+}
+
+.light-mode .toggle-slider:before {
+    background-color: #9ca3af;
+}

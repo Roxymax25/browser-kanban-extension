@@ -149,7 +149,31 @@ export const TRANSLATIONS = {
 
         // Clear Clipboard
         tooltipClearClipboard: 'Zwischenablage leeren',
-        toastPastedToClipboard: 'In Zwischenablage eingefügt'
+        toastPastedToClipboard: 'In Zwischenablage eingefügt',
+
+        // Cloud Sync
+        settingsCloudSync: 'Cloud-Synchronisierung',
+        syncEnable: 'Synchronisierung aktivieren',
+        syncServerUrl: 'Server URL',
+        syncServerUrlHint: 'z.B. https://cloud.example.com/remote.php/dav/files/username/',
+        syncUsername: 'Benutzername',
+        syncPassword: 'Passwort',
+        syncPasswordNote: 'Wird verschlüsselt lokal gespeichert',
+        syncFilePath: 'Dateipfad',
+        syncFilePathHint: 'Ordner wird automatisch erstellt',
+        syncTestConnection: 'Verbindung testen',
+        syncTesting: 'Teste...',
+        syncTestSuccess: 'Verbindung erfolgreich!',
+        syncTestFailed: 'Verbindung fehlgeschlagen',
+        syncLastSync: 'Letzte Synchronisierung:',
+        syncStatusConnected: 'Sync: Verbunden',
+        syncStatusSyncing: 'Synchronisiere...',
+        syncStatusError: 'Sync-Fehler',
+        syncStatusOffline: 'Sync: Offline',
+        syncComplete: 'Synchronisierung abgeschlossen',
+        syncErrorMissingFields: 'Bitte Server-URL und Benutzername ausfüllen',
+        syncErrorNoPassword: 'Bitte Passwort eingeben',
+        syncDataUpdated: 'Daten aus der Cloud aktualisiert'
     },
     en: {
         // Header
@@ -301,6 +325,30 @@ export const TRANSLATIONS = {
 
         // Clear Clipboard
         tooltipClearClipboard: 'Clear clipboard',
-        toastPastedToClipboard: 'Pasted to clipboard'
+        toastPastedToClipboard: 'Pasted to clipboard',
+
+        // Cloud Sync
+        settingsCloudSync: 'Cloud Sync',
+        syncEnable: 'Enable synchronization',
+        syncServerUrl: 'Server URL',
+        syncServerUrlHint: 'e.g. https://cloud.example.com/remote.php/dav/files/username/',
+        syncUsername: 'Username',
+        syncPassword: 'Password',
+        syncPasswordNote: 'Stored encrypted locally',
+        syncFilePath: 'File path',
+        syncFilePathHint: 'Folder will be created automatically',
+        syncTestConnection: 'Test connection',
+        syncTesting: 'Testing...',
+        syncTestSuccess: 'Connection successful!',
+        syncTestFailed: 'Connection failed',
+        syncLastSync: 'Last sync:',
+        syncStatusConnected: 'Sync: Connected',
+        syncStatusSyncing: 'Syncing...',
+        syncStatusError: 'Sync error',
+        syncStatusOffline: 'Sync: Offline',
+        syncComplete: 'Sync complete',
+        syncErrorMissingFields: 'Please fill in server URL and username',
+        syncErrorNoPassword: 'Please enter a password',
+        syncDataUpdated: 'Data updated from cloud'
     }
 };
