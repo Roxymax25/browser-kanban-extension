@@ -1,10 +1,9 @@
 # Dashboard & Clipboard
 
-A browser extension for personal task and clipboard management with a modern dark-theme design.
+A Chrome Extension for personal task and clipboard management with a modern dark-theme design.
 
 ![Version](https://img.shields.io/badge/version-3.3-orange)
 ![Chrome](https://img.shields.io/badge/chrome-extension-green)
-![Firefox](https://img.shields.io/badge/firefox-addon-orange)
 
 ## Features
 
@@ -85,78 +84,62 @@ A browser extension for personal task and clipboard management with a modern dar
 
 ## Installation
 
-### Chrome
-
-1. Download the `chrome.zip` from the dist folder
+1. Clone repository or download as ZIP
 2. Open Chrome and navigate to `chrome://extensions`
 3. Enable "Developer mode" (top right)
 4. Click "Load unpacked"
-5. Select the `chrome` folder
+5. Select the project folder
 
-### Firefox
+## Usage
 
-1. Download the `firefox.zip` from the dist folder (or run `build.ps1` to create it)
-2. Open Firefox and navigate to `about:debugging`
-3. Click "This Firefox" → "Load Temporary Add-on"
-4. Select the `manifest.json` from the `firefox` folder
-
-**Note**: The Firefox version uses a bundled JavaScript file (`script.bundled.js`) instead of ES6 modules for compatibility. The build script handles this automatically.
-
-## Building
-
-### Windows (PowerShell)
-
-```powershell
-.\build.ps1
-```
-
-This will create `dist/chrome.zip` and `dist/firefox.zip` ready for upload.
-
-**Note for Firefox**: The build script automatically bundles all ES6 modules into a single file (`script.bundled.js`) because Firefox extensions don't support ES6 modules in the same way as Chrome. This bundling process handles import aliases (like `import { ICONS as icons }`) automatically.
+- **Click extension icon**: Dashboard opens in a new tab
+- **Click again**: Focuses the existing dashboard tab
+- All data is automatically saved in Chrome storage
 
 ## File Structure
 
 ```
 ChromePlugin_Notes/
-├── chrome/                    # Chrome extension
-│   ├── manifest.json          # Chrome-specific manifest
-│   ├── index.html             # Dashboard structure
-│   ├── script.js              # Main application logic
-│   ├── style.css              # Styling
-│   ├── background.js          # Tab management
-│   ├── icon.png               # Extension icon
-│   ├── PRIVACY.md             # Privacy policy
-│   ├── README.md              # Documentation
-│   └── modules/               # Application modules
-│
-├── firefox/                   # Firefox extension
-│   ├── manifest.json          # Firefox-specific manifest
-│   ├── index.html             # Dashboard structure
-│   ├── script.js              # Main application logic
-│   ├── style.css              # Styling
-│   ├── background.js          # Tab management
-│   ├── icon.png               # Extension icon
-│   ├── PRIVACY.md             # Privacy policy
-│   ├── README.md              # Documentation
-│   └── modules/               # Application modules
-│
-├── build.ps1                  # PowerShell build script (bundles Firefox modules automatically)
-└── dist/                      # Build output (created by build script)
-    ├── chrome.zip             # Chrome Web Store package
-    └── firefox.zip            # Firefox Add-ons package
+├── manifest.json          # Extension configuration
+├── index.html             # Dashboard structure
+├── script.js              # Main application logic
+├── style.css              # Styling
+├── background.js          # Tab management
+├── icon.png               # Extension icon
+├── PRIVACY.md             # Privacy policy
+├── README.md              # This file
+└── modules/
+    ├── config/
+    │   ├── constants.js       # Application constants
+    │   ├── colorPalettes.js   # Color theme definitions
+    │   ├── icons.js           # SVG icon definitions
+    │   └── translations.js    # i18n translations (DE/EN)
+    ├── services/
+    │   ├── storage.js         # Chrome storage abstraction
+    │   ├── ArchiveService.js  # Task archive management
+    │   └── sync/              # Cloud sync module
+    │       ├── SyncService.js     # Sync orchestrator
+    │       ├── WebDAVProvider.js  # WebDAV implementation
+    │       ├── BaseSyncProvider.js # Provider base class
+    │       └── crypto.js          # Password encryption
+    ├── ui/
+    │   ├── ClipboardPanel.js  # Clipboard UI module
+    │   └── TimeTracker.js     # Work time tracker module
+    └── utils/
+        ├── helpers.js         # Utility functions
+        └── i18n.js            # Internationalization
 ```
 
 ## Technologies
 
 - **Vanilla JavaScript** (ES6 modules, no frameworks)
 - **CSS3** with Custom Properties
-- **Chrome Storage API** / **Firefox Storage API** for data persistence
+- **Chrome Storage API** for data persistence
 - **Lucide Icons** (inline SVG)
 
 ## Version History
 
 ### v3.3 (January 2026)
-- **Firefox Support**: Added Firefox extension version
 - **Cloud Sync**: WebDAV/Nextcloud synchronization for cross-device usage
 - **Encrypted Passwords**: AES-GCM encryption for stored credentials
 - **Tab Focus Sync**: Auto-checks for remote updates when returning to tab
@@ -184,7 +167,7 @@ ChromePlugin_Notes/
 
 ## Privacy
 
-All data is stored **locally only** on your device using the browser's Storage API. 
+All data is stored **locally only** on your device using Chrome's Storage API. 
 
 **Cloud Sync (optional)**: If enabled, data is synced to your own WebDAV server (e.g., Nextcloud). Passwords are encrypted locally before storage. No data is ever sent to third-party servers.
 

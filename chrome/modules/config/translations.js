@@ -173,7 +173,9 @@ export const TRANSLATIONS = {
         syncComplete: 'Synchronisierung abgeschlossen',
         syncErrorMissingFields: 'Bitte Server-URL und Benutzername ausfüllen',
         syncErrorNoPassword: 'Bitte Passwort eingeben',
-        syncDataUpdated: 'Daten aus der Cloud aktualisiert'
+        syncDataUpdated: 'Daten aus der Cloud aktualisiert',
+        syncPermissionDenied: 'Zugriff verweigert. Bitte erlauben Sie den Zugriff auf den Server.',
+        syncPermissionRequired: 'Berechtigung erforderlich. Bitte klicken Sie erneut auf den Button.'
     },
     en: {
         // Header
@@ -349,6 +351,8 @@ export const TRANSLATIONS = {
         syncComplete: 'Sync complete',
         syncErrorMissingFields: 'Please fill in server URL and username',
         syncErrorNoPassword: 'Please enter a password',
-        syncDataUpdated: 'Data updated from cloud'
+        syncDataUpdated: 'Data updated from cloud',
+        syncPermissionDenied: 'Permission denied. Please allow access to the server.',
+        syncPermissionRequired: 'Permission required. Please click the button again.'
     }
 };

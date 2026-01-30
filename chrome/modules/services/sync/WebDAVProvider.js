@@ -32,6 +32,81 @@ export class WebDAVProvider extends BaseSyncProvider {
     }
 
     /**
+     * Extract origin pattern from server URL for permission request
+     * @param {string} url - The server URL
+     * @returns {string} - Origin pattern like "https://example.com/*"
+     */
+    _getOriginPattern(url) {
+        try {
+            const urlObj = new URL(url);
+            return `${urlObj.protocol}//${urlObj.host}/*`;
+        } catch (e) {
+            // Fallback: try to extract manually
+            const match = url.match(/^(https?:\/\/[^\/]+)/);
+            return match ? `${match[1]}/*` : null;
+        }
+    }
+
+    /**
+     * Check if we have permission to access the server URL
+     * @returns {Promise<boolean>}
+     */
+    async hasPermission() {
+        const origin = this._getOriginPattern(this.config.serverUrl);
+        if (!origin) return false;
+        
+        try {
+            return await chrome.permissions.contains({
+                origins: [origin]
+            });
+        } catch (e) {
+            console.error('Error checking permission:', e);
+            return false;
+        }
+    }
+
+    /**
+     * Request permission to access the server URL
+     * Must be called from a user gesture (click handler)
+     * @returns {Promise<boolean>}
+     */
+    async requestPermission() {
+        const origin = this._getOriginPattern(this.config.serverUrl);
+        if (!origin) {
+            this.lastError = new Error('Invalid server URL');
+            return false;
+        }
+        
+        try {
+            const granted = await chrome.permissions.request({
+                origins: [origin]
+            });
+            
+            if (!granted) {
+                this.lastError = new Error('Permission denied by user');
+            }
+            
+            return granted;
+        } catch (e) {
+            console.error('Error requesting permission:', e);
+            this.lastError = e;
+            return false;
+        }
+    }
+
+    /**
+     * Ensure we have permission before making requests
+     * @returns {Promise<void>}
+     * @throws {Error} If permission is not granted
+     */
+    async _ensurePermission() {
+        const hasPermission = await this.hasPermission();
+        if (!hasPermission) {
+            throw new Error('PERMISSION_REQUIRED');
+        }
+    }
+
+    /**
      * Get authorization header value
      * Uses proper UTF-8 encoding for special characters in username/password
      * @returns {string}
@@ -78,6 +153,9 @@ export class WebDAVProvider extends BaseSyncProvider {
     async connect() {
         try {
             this.lastError = null;
+            
+            // Check permission first
+            await this._ensurePermission();
             
             // Ensure URL ends with /
             let serverUrl = this.config.serverUrl.trim();

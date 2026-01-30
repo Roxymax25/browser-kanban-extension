@@ -1,0 +1,35 @@
+{
+  "manifest_version": 2,
+  "name": "Dashboard & Zwischenablage",
+  "version": "3.3",
+  "description": "Dein persönliches Dashboard mit Kanban-Board und Zwischenablage für schnelles Speichern von Texten und Bildern.",
+  "browser_action": {
+    "default_title": "Dashboard öffnen",
+    "default_icon": {
+      "16": "icon.png",
+      "48": "icon.png",
+      "128": "icon.png"
+    }
+  },
+  "permissions": [
+    "storage",
+    "tabs",
+    "https://*/*",
+    "http://*/*"
+  ],
+  "background": {
+    "scripts": ["background.js"],
+    "persistent": false
+  },
+  "icons": {
+    "16": "icon.png",
+    "48": "icon.png",
+    "128": "icon.png"
+  },
+  "content_security_policy": "script-src 'self'; object-src 'self'",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "dashboard-zwischenablage@example.com"
+    }
+  }
+}

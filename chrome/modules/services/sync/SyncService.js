@@ -425,7 +425,7 @@ export class SyncService {
     /**
      * Test connection with current settings
      * @param {Object} config - Optional config to test (uses current if not provided)
-     * @returns {Promise<{success: boolean, error?: string}>}
+     * @returns {Promise<{success: boolean, error?: string, permissionRequired?: boolean}>}
      */
     async testConnection(config) {
         try {
@@ -460,7 +460,50 @@ export class SyncService {
                 };
             }
         } catch (error) {
+            // Check if permission is required
+            if (error.message === 'PERMISSION_REQUIRED') {
+                return { success: false, error: 'Permission required', permissionRequired: true };
+            }
             return { success: false, error: error.message };
+        }
+    }
+
+    /**
+     * Request host permission for a WebDAV server URL
+     * Must be called from a user gesture (click handler)
+     * @param {string} serverUrl - The WebDAV server URL
+     * @returns {Promise<boolean>}
+     */
+    async requestHostPermission(serverUrl) {
+        try {
+            const urlObj = new URL(serverUrl);
+            const origin = `${urlObj.protocol}//${urlObj.host}/*`;
+            
+            return await chrome.permissions.request({
+                origins: [origin]
+            });
+        } catch (e) {
+            console.error('Error requesting host permission:', e);
+            return false;
+        }
+    }
+
+    /**
+     * Check if we have permission for a WebDAV server URL
+     * @param {string} serverUrl - The WebDAV server URL
+     * @returns {Promise<boolean>}
+     */
+    async hasHostPermission(serverUrl) {
+        try {
+            const urlObj = new URL(serverUrl);
+            const origin = `${urlObj.protocol}//${urlObj.host}/*`;
+            
+            return await chrome.permissions.contains({
+                origins: [origin]
+            });
+        } catch (e) {
+            console.error('Error checking host permission:', e);
+            return false;
         }
     }
 

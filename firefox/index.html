@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mein Dashboard</title>
+    <link rel="icon" type="image/png" href="icon.png">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <header class="header">
+        <div class="header-left">
+            <div class="logo">
+                <img src="icon.png" alt="Dashboard Logo" width="28" height="28">
+            </div>
+            <div>
+                <h1>Mein Dashboard</h1>
+                <div class="header-info">
+                    <span>
+                        <svg class="icon-sm" xmlns="http://www.w3.org/2000/svg" width="14" height="14"
+                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                        </svg>
+                        <span id="current-date"></span>
+                    </span>
+                    <span>
+                        <svg class="icon-sm" xmlns="http://www.w3.org/2000/svg" width="14" height="14"
+                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                        <span id="current-time"></span>
+                    </span>
+                    <span id="task-stats-container">
+                        <svg class="icon-sm" xmlns="http://www.w3.org/2000/svg" width="14" height="14"
+                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                        </svg>
+                        <span id="task-stats">0/0</span> <span id="tasks-label">Aufgaben</span>
+                    </span>
+                </div>
+            </div>
+        </div>
+        <div class="header-center">
+            <div class="time-tracker">
+                <div class="tracker-display">
+                    <svg class="tracker-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                    <span class="tracker-time" id="tracker-time">00:00:00</span>
+                </div>
+                <div class="tracker-controls">
+                    <button id="tracker-start-btn" class="tracker-btn start">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                        </svg>
+                        Start
+                    </button>
+                    <button id="tracker-pause-btn" class="tracker-btn pause" disabled>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="6" y="4" width="4" height="16"></rect>
+                            <rect x="14" y="4" width="4" height="16"></rect>
+                        </svg>
+                        Pause
+                    </button>
+                    <button id="tracker-log-btn" class="tracker-btn log">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                        </svg>
+                        Log
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="header-right">
+            <!-- Sync Status Indicator -->
+            <div id="sync-indicator" class="sync-indicator hidden" title="Sync Status">
+                <!-- Idle/Connected Icon -->
+                <svg id="sync-icon-idle" class="sync-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+                </svg>
+                <!-- Syncing Icon (animated) -->
+                <svg id="sync-icon-syncing" class="sync-icon hidden" xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+                </svg>
+                <!-- Error Icon -->
+                <svg id="sync-icon-error" class="sync-icon hidden" xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <!-- Offline Icon -->
+                <svg id="sync-icon-offline" class="sync-icon hidden" xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <line x1="1" y1="1" x2="23" y2="23"></line>
+                    <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"></path>
+                    <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"></path>
+                    <path d="M10.71 5.05A16 16 0 0 1 22.58 9"></path>
+                    <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"></path>
+                    <path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>
+                    <line x1="12" y1="20" x2="12.01" y2="20"></line>
+                </svg>
+            </div>
+            <button id="settings-btn" class="settings-btn" title="Einstellungen" aria-label="Einstellungen">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path
+                        d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+                    </path>
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <div class="board">
+            <div class="column" id="todo" data-status="todo">
+                <div class="column-header">
+                    <div class="column-title">
+                        <div class="column-indicator"></div>
+                        <h2>Zu erledigen</h2>
+                        <button id="add-task-btn" class="add-task-column-btn" title="Neue Aufgabe (Strg+N)" aria-label="Neue Aufgabe">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                        </button>
+                    </div>
+                    <span class="task-count" id="todo-count">0</span>
+                </div>
+                <div class="task-list"></div>
+            </div>
+
+            <div class="column" id="in-progress" data-status="in-progress">
+                <div class="column-header">
+                    <div class="column-title">
+                        <div class="column-indicator"></div>
+                        <h2>In Bearbeitung</h2>
+                    </div>
+                    <span class="task-count" id="progress-count">0</span>
+                </div>
+                <div class="task-list"></div>
+            </div>
+
+            <div class="column" id="done" data-status="done">
+                <div class="column-header">
+                    <div class="column-title">
+                        <div class="column-indicator"></div>
+                        <h2>Erledigt</h2>
+                        <button id="export-done-btn" class="export-column-btn" title="Als Markdown exportieren" aria-label="Als Markdown exportieren">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                        </button>
+                        <button id="archive-done-btn" class="export-column-btn"
+                            title="Klick: Tasks archivieren | Doppelklick/Rechtsklick: Archiv-Logs öffnen" aria-label="Tasks archivieren">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <rect x="2" y="4" width="20" height="5" rx="2"></rect>
+                                <path d="M4 9v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9"></path>
+                                <path d="M10 13h4"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <span class="task-count" id="done-count">0</span>
+                </div>
+                <div class="task-list"></div>
+            </div>
+        </div>
+
+        <!-- Zwischenablage Panel -->
+        <aside class="clipboard-panel">
+            <div class="clipboard-header">
+                <div class="clipboard-title">
+                    <div class="clipboard-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path
+                                d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48">
+                            </path>
+                        </svg>
+                    </div>
+                    <h3>Zwischenablage</h3>
+                </div>
+                <button id="clear-clipboard-btn" class="clear-clipboard-btn" title="Zwischenablage leeren" aria-label="Zwischenablage leeren">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="clipboard-input-area">
+                <textarea class="clipboard-input" id="clipboard-input"
+                    placeholder="Text hier einfügen oder tippen...&#10;Strg+V zum schnellen Einfügen&#10;Bilder per Drag & Drop"></textarea>
+                <div class="clipboard-buttons">
+                    <button class="clipboard-btn" id="add-clipboard-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="12" y1="17" x2="12" y2="3"></line>
+                            <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                        </svg>
+                        Text speichern
+                    </button>
+                    <button class="clipboard-btn image-btn" id="image-upload-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                            <polyline points="21 15 16 10 5 21"></polyline>
+                        </svg>
+                        Bild
+                    </button>
+                </div>
+                <input type="file" id="image-input" accept="image/*" style="display: none;">
+            </div>
+            <div class="clipboard-items" id="clipboard-items"></div>
+        </aside>
+    </div>
+
+    <!-- Modal für Aufgaben -->
+    <div id="task-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-btn" role="button" aria-label="Schließen" tabindex="0">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </span>
+            <h2 id="modal-title">Neue Aufgabe</h2>
+
+            <div class="form-group">
+                <label class="form-label">Beschreibung</label>
+                <textarea id="task-input"
+                    placeholder="Was muss erledigt werden?&#10;Shift+Enter zum Speichern"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Priorität</label>
+                <div class="priority-selector">
+                    <div class="priority-option low" data-priority="low">Niedrig</div>
+                    <div class="priority-option medium selected" data-priority="medium">Mittel</div>
+                    <div class="priority-option high" data-priority="high">Hoch</div>
+                </div>
+            </div>
+
+            <div class="form-group task-history-section hidden" id="task-history-section">
+                <label class="form-label">Status-Verlauf</label>
+                <div class="task-history-list" id="task-history-list"></div>
+            </div>
+
+            <div class="modal-actions">
+                <button id="delete-task-btn" class="danger-btn hidden">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                    Löschen
+                </button>
+                <button id="save-task-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                        <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                        <polyline points="7 3 7 8 15 8"></polyline>
+                    </svg>
+                    Speichern
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Zusätzliche Info Modal -->
+    <div id="info-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-btn info-close-btn" role="button" aria-label="Schließen" tabindex="0">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </span>
+            <h2>
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>
+                Zusätzliche Info
+            </h2>
+
+            <div class="form-group">
+                <label class="form-label">Notiz oder Zusatzinfo</label>
+                <textarea id="info-input"
+                    placeholder="Zusätzliche Informationen eingeben...&#10;Shift+Enter zum Speichern"></textarea>
+            </div>
+
+            <div class="modal-actions">
+                <button id="clear-info-btn" class="danger-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                    Löschen
+                </button>
+                <button id="save-info-btn" class="primary-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                        <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                        <polyline points="7 3 7 8 15 8"></polyline>
+                    </svg>
+                    Speichern
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Arbeitszeit-Log Modal -->
+    <div id="worktime-modal" class="modal hidden">
+        <div class="modal-content worktime-modal-content">
+            <span class="close-btn worktime-close-btn" role="button" aria-label="Schließen" tabindex="0">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </span>
+            <h2>
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+                Arbeitszeit-Log
+            </h2>
+            <div class="worktime-summary" id="worktime-summary"></div>
+            <div class="worktime-entries" id="worktime-entries"></div>
+            <div class="worktime-actions">
+                <button id="clear-worktime-btn" class="danger-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                    Alle löschen
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal hidden">
+        <div class="modal-content settings-modal-content">
+            <span class="close-btn settings-close-btn" role="button" aria-label="Schließen" tabindex="0">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </span>
+            <h2>
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path
+                        d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+                    </path>
+                </svg>
+                Einstellungen
+            </h2>
+
+            <div class="form-group">
+                <label class="form-label" data-i18n="settingsLanguage">Sprache / Language</label>
+                <div class="language-selector" id="language-selector">
+                    <div class="language-option selected" data-lang="de">
+                        🇩🇪 Deutsch
+                    </div>
+                    <div class="language-option" data-lang="en">
+                        🇬🇧 English
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Theme / Modus</label>
+                <div class="theme-selector" id="theme-selector">
+                    <div class="theme-option" data-theme="dark">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                        </svg>
+                        Dark
+                    </div>
+                    <div class="theme-option" data-theme="light">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="5"></circle>
+                            <line x1="12" y1="1" x2="12" y2="3"></line>
+                            <line x1="12" y1="21" x2="12" y2="23"></line>
+                            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                            <line x1="1" y1="12" x2="3" y2="12"></line>
+                            <line x1="21" y1="12" x2="23" y2="12"></line>
+                            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                        </svg>
+                        Light
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" data-i18n="settingsColorPalette">Farbpalette wählen</label>
+                <div class="palette-grid" id="palette-grid">
+                    <div class="palette-option" data-palette="sunset-orange">
+                        <div class="palette-preview">
+                            <span class="palette-color" style="background: #e85d04;"></span>
+                            <span class="palette-color" style="background: #dc2f02;"></span>
+                            <span class="palette-color" style="background: #f48c06;"></span>
+                            <span class="palette-color" style="background: #38b000;"></span>
+                        </div>
+                        <span class="palette-name">🌅 Sunset Orange</span>
+                    </div>
+                    <div class="palette-option" data-palette="ocean-blue">
+                        <div class="palette-preview">
+                            <span class="palette-color" style="background: #0077b6;"></span>
+                            <span class="palette-color" style="background: #0096c7;"></span>
+                            <span class="palette-color" style="background: #00b4d8;"></span>
+                            <span class="palette-color" style="background: #38b000;"></span>
+                        </div>
+                        <span class="palette-name">🌊 Ocean Blue</span>
+                    </div>
+                    <div class="palette-option" data-palette="forest-green">
+                        <div class="palette-preview">
+                            <span class="palette-color" style="background: #2d6a4f;"></span>
+                            <span class="palette-color" style="background: #40916c;"></span>
+                            <span class="palette-color" style="background: #52b788;"></span>
+                            <span class="palette-color" style="background: #74c69d;"></span>
+                        </div>
+                        <span class="palette-name">🌲 Forest Green</span>
+                    </div>
+                    <div class="palette-option" data-palette="royal-purple">
+                        <div class="palette-preview">
+                            <span class="palette-color" style="background: #7b2cbf;"></span>
+                            <span class="palette-color" style="background: #9d4edd;"></span>
+                            <span class="palette-color" style="background: #c77dff;"></span>
+                            <span class="palette-color" style="background: #38b000;"></span>
+                        </div>
+                        <span class="palette-name">👑 Royal Purple</span>
+                    </div>
+                    <div class="palette-option" data-palette="cherry-blossom">
+                        <div class="palette-preview">
+                            <span class="palette-color" style="background: #ff758f;"></span>
+                            <span class="palette-color" style="background: #ff4d6d;"></span>
+                            <span class="palette-color" style="background: #ffb3c1;"></span>
+                            <span class="palette-color" style="background: #38b000;"></span>
+                        </div>
+                        <span class="palette-name">🌸 Cherry Blossom</span>
+                    </div>
+                    <div class="palette-option" data-palette="midnight-gold">
+                        <div class="palette-preview">
+                            <span class="palette-color" style="background: #fca311;"></span>
+                            <span class="palette-color" style="background: #e5a000;"></span>
+                            <span class="palette-color" style="background: #ffbe0b;"></span>
+                            <span class="palette-color" style="background: #38b000;"></span>
+                        </div>
+                        <span class="palette-name">🌙 Midnight Gold</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cloud Sync Settings -->
+            <div class="form-group sync-settings-group">
+                <label class="form-label" data-i18n="settingsCloudSync">Cloud-Synchronisierung</label>
+                
+                <!-- Sync Enable Toggle -->
+                <div class="sync-toggle-container">
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="sync-enabled-toggle">
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <span class="sync-toggle-label" data-i18n="syncEnable">Synchronisierung aktivieren</span>
+                </div>
+
+                <!-- WebDAV Configuration (shown when enabled) -->
+                <div id="webdav-config" class="sync-config hidden">
+                    <div class="sync-input-group">
+                        <label data-i18n="syncServerUrl">Server URL</label>
+                        <input type="url" id="webdav-server" 
+                               placeholder="https://nextcloud.example.com/remote.php/dav/files/user/">
+                        <small class="sync-input-hint" data-i18n="syncServerUrlHint">z.B. https://cloud.example.com/remote.php/dav/files/username/</small>
+                    </div>
+                    <div class="sync-input-group">
+                        <label data-i18n="syncUsername">Benutzername</label>
+                        <input type="text" id="webdav-username" placeholder="username" autocomplete="username">
+                    </div>
+                    <div class="sync-input-group">
+                        <label data-i18n="syncPassword">Passwort</label>
+                        <input type="password" id="webdav-password" placeholder="••••••••" autocomplete="current-password">
+                        <small class="sync-input-hint" data-i18n="syncPasswordNote">Wird verschlüsselt lokal gespeichert</small>
+                    </div>
+                    <div class="sync-input-group">
+                        <label data-i18n="syncFilePath">Dateipfad</label>
+                        <input type="text" id="webdav-filepath" value="DashboardSync/dashboard-data.json" 
+                               placeholder="DashboardSync/dashboard-data.json">
+                        <small class="sync-input-hint" data-i18n="syncFilePathHint">Ordner wird automatisch erstellt</small>
+                    </div>
+                    <div class="sync-actions">
+                        <button id="webdav-test-btn" class="sync-btn secondary-btn" type="button">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                            </svg>
+                            <span data-i18n="syncTestConnection">Verbindung testen</span>
+                        </button>
+                    </div>
+                    <div id="sync-test-message" class="sync-test-message hidden"></div>
+                    
+                    <!-- Last sync info -->
+                    <div id="sync-last-info" class="sync-last-info hidden">
+                        <span data-i18n="syncLastSync">Letzte Synchronisierung:</span>
+                        <span id="sync-last-time"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button id="cancel-settings-btn" class="secondary-btn">Abbrechen</button>
+                <button id="save-settings-btn" class="primary-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                        <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                        <polyline points="7 3 7 8 15 8"></polyline>
+                    </svg>
+                    Speichern
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Archive Logs Modal -->
+    <div id="archive-logs-modal" class="modal hidden">
+        <div class="modal-content archive-logs-modal-content">
+            <span class="close-btn archive-logs-close-btn" role="button" aria-label="Schließen" tabindex="0">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </span>
+            <h2>
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="4" width="20" height="5" rx="2"></rect>
+                    <path d="M4 9v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9"></path>
+                    <path d="M10 13h4"></path>
+                </svg>
+                Archiv-Logs
+            </h2>
+            <div class="archive-search-container">
+                <input type="text" id="archive-search-input" class="archive-search-input" placeholder="Suchen...">
+            </div>
+            <div class="archive-filters">
+                <div class="archive-filter-group">
+                    <label class="archive-filter-label" data-i18n="filterPriority">Priorität</label>
+                    <div class="archive-filter-options" id="archive-priority-filter">
+                        <button class="archive-filter-btn active" data-priority="all">Alle</button>
+                        <button class="archive-filter-btn" data-priority="high">Hoch</button>
+                        <button class="archive-filter-btn" data-priority="medium">Mittel</button>
+                        <button class="archive-filter-btn" data-priority="low">Niedrig</button>
+                    </div>
+                </div>
+                <div class="archive-filter-group">
+                    <label class="archive-filter-label" data-i18n="filterTime">Zeitraum</label>
+                    <div class="archive-filter-options" id="archive-time-filter">
+                        <button class="archive-filter-btn active" data-time="all">Alle</button>
+                        <button class="archive-filter-btn" data-time="today">Heute</button>
+                        <button class="archive-filter-btn" data-time="week">7 Tage</button>
+                        <button class="archive-filter-btn" data-time="month">30 Tage</button>
+                    </div>
+                </div>
+            </div>
+            <div class="archive-logs-entries" id="archive-logs-entries"></div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirm-modal" class="modal hidden">
+        <div class="modal-content confirm-modal-content">
+            <span class="close-btn confirm-close-btn" role="button" aria-label="Schließen" tabindex="0">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </span>
+            <h2 id="confirm-modal-title">
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                Bestätigen
+            </h2>
+            <div class="confirm-message-container">
+                <p id="confirm-modal-message">Sind Sie sicher?</p>
+            </div>
+            <div class="modal-actions">
+                <button id="confirm-cancel-btn" class="secondary-btn">Abbrechen</button>
+                <button id="confirm-ok-btn" class="danger-btn">Löschen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Benachrichtigung -->
+    <div class="toast" id="toast">
+        <span class="toast-icon"></span>
+        <span class="toast-message"></span>
+    </div>
+
+    <script src="script.bundled.js"></script>
+</body>
+
+</html>

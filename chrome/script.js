@@ -1128,6 +1128,17 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         
+        // Check if we have permission, request if needed
+        const hasPermission = await syncService.hasHostPermission(serverUrl);
+        if (!hasPermission) {
+            // Request permission - this must happen in the click handler
+            const granted = await syncService.requestHostPermission(serverUrl);
+            if (!granted) {
+                showTestMessage(t('syncPermissionDenied') || 'Permission denied. Please allow access to the server.', false);
+                return;
+            }
+        }
+        
         // Disable button during test
         if (testBtn) {
             testBtn.disabled = true;
@@ -1144,6 +1155,9 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (result.success) {
                 showTestMessage(t('syncTestSuccess') || 'Connection successful!', true);
+            } else if (result.permissionRequired) {
+                // This shouldn't happen now, but handle it just in case
+                showTestMessage(t('syncPermissionRequired') || 'Permission required. Please click the button again.', false);
             } else {
                 showTestMessage((t('syncTestFailed') || 'Connection failed') + ': ' + result.error, false);
             }
