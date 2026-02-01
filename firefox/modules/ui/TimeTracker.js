@@ -4,7 +4,7 @@
  */
 
 import { t } from '../utils/i18n.js';
-import { escapeHtml, generateId } from '../utils/helpers.js';
+import { escapeHtml, generateId, safeSetHTML } from '../utils/helpers.js';
 import { ICONS } from '../config/icons.js';
 
 export class TimeTracker {
@@ -194,28 +194,28 @@ export class TimeTracker {
      */
     updateUI() {
         if (this.state.isRunning) {
-            this.startBtn.innerHTML = `${ICONS.stop} Stop`;
+            safeSetHTML(this.startBtn, `${ICONS.stop} Stop`);
             this.startBtn.classList.add('running');
             this.pauseBtn.disabled = false;
 
             if (this.state.isPaused) {
                 this.display.classList.remove('running');
                 this.display.classList.add('paused');
-                this.pauseBtn.innerHTML = `${ICONS.play} ${t('resume') || 'Weiter'}`;
+                safeSetHTML(this.pauseBtn, `${ICONS.play} ${t('resume') || 'Weiter'}`);
                 this.pauseBtn.classList.add('paused');
             } else {
                 this.display.classList.add('running');
                 this.display.classList.remove('paused');
-                this.pauseBtn.innerHTML = `${ICONS.pause} Pause`;
+                safeSetHTML(this.pauseBtn, `${ICONS.pause} Pause`);
                 this.pauseBtn.classList.remove('paused');
             }
         } else {
-            this.startBtn.innerHTML = `${ICONS.play} Start`;
+            safeSetHTML(this.startBtn, `${ICONS.play} Start`);
             this.startBtn.classList.remove('running');
             this.pauseBtn.disabled = true;
             this.pauseBtn.classList.remove('paused');
             this.display.classList.remove('running', 'paused');
-            this.pauseBtn.innerHTML = `${ICONS.pause} Pause`;
+            safeSetHTML(this.pauseBtn, `${ICONS.pause} Pause`);
         }
     }
 
@@ -261,7 +261,7 @@ export class TimeTracker {
         const totalDuration = this.sessions.reduce((sum, s) => sum + s.duration, 0);
         const sessionCount = this.sessions.length;
 
-        this.summaryEl.innerHTML = `
+        safeSetHTML(this.summaryEl, `
             <div class="summary-item">
                 <div class="summary-label">${t('total')}</div>
                 <div class="summary-value">${this.formatTime(totalDuration)}</div>
@@ -270,15 +270,15 @@ export class TimeTracker {
                 <div class="summary-label">${t('sessions')}</div>
                 <div class="summary-value">${sessionCount}</div>
             </div>
-        `;
+        `);
 
         if (this.sessions.length === 0) {
-            this.entriesEl.innerHTML = `
+            safeSetHTML(this.entriesEl, `
                 <div class="worktime-empty">
                     ${ICONS.clock}
                     <div>${t('noWorktimeRecorded')}</div>
                 </div>
-            `;
+            `);
             return;
         }
 
@@ -314,7 +314,7 @@ export class TimeTracker {
                 </div>
             `;
         });
-        this.entriesEl.innerHTML = html;
+        safeSetHTML(this.entriesEl, html);
 
         // Add delete listeners
         this.entriesEl.querySelectorAll('.worktime-entry-delete').forEach(btn => {

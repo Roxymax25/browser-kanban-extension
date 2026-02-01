@@ -6,9 +6,9 @@
   "browser_action": {
     "default_title": "Dashboard öffnen",
     "default_icon": {
-      "16": "icon.png",
-      "48": "icon.png",
-      "128": "icon.png"
+      "16": "icon-16.png",
+      "48": "icon-48.png",
+      "128": "icon-128.png"
     }
   },
   "permissions": [
@@ -18,18 +18,23 @@
     "http://*/*"
   ],
   "background": {
-    "scripts": ["background.js"],
+    "scripts": [
+      "background.js"
+    ],
     "persistent": false
   },
   "icons": {
-    "16": "icon.png",
-    "48": "icon.png",
-    "128": "icon.png"
+    "16": "icon-16.png",
+    "48": "icon-48.png",
+    "128": "icon-128.png"
   },
   "content_security_policy": "script-src 'self'; object-src 'self'",
   "browser_specific_settings": {
     "gecko": {
-      "id": "dashboard-zwischenablage@example.com"
+      "id": "dashboard-zwischenablage@example.com",
+      "data_collection_permissions": {
+        "required": ["none"]
+      }
     }
   }
 }

@@ -4,7 +4,7 @@
  */
 
 import { t } from '../utils/i18n.js';
-import { escapeHtml, formatDateTime, fuzzyMatch } from '../utils/helpers.js';
+import { escapeHtml, formatDateTime, fuzzyMatch, safeSetHTML } from '../utils/helpers.js';
 import { ICONS } from '../config/icons.js';
 
 export class ArchiveService {
@@ -132,7 +132,7 @@ export class ArchiveService {
      * Render filtered archive logs
      */
     renderLogs(searchQuery) {
-        this.entriesEl.innerHTML = '';
+        this.entriesEl.replaceChildren();
 
         // Get current filter values
         const now = Date.now();
@@ -165,12 +165,12 @@ export class ArchiveService {
         });
 
         if (filteredLogs.length === 0) {
-            this.entriesEl.innerHTML = `
+            safeSetHTML(this.entriesEl, `
                 <div class="archive-empty-state">
                     ${ICONS.archive}
                     <div>${t('noArchivedLogs')}</div>
                 </div>
-            `;
+            `);
             return;
         }
 
@@ -196,7 +196,7 @@ export class ArchiveService {
                 `;
             }
 
-            entry.innerHTML = `
+            safeSetHTML(entry, `
                 <div class="archive-log-content">${escapeHtml(log.content)}</div>
                 <div class="archive-log-meta">
                     <span>${ICONS.calendar} ${t('completedAt')}: ${formatDateTime(log.archivedAt)}</span>
@@ -204,7 +204,7 @@ export class ArchiveService {
                 </div>
                 ${log.additionalInfo ? `<div class="task-additional-info">${ICONS.info} ${escapeHtml(log.additionalInfo)}</div>` : ''}
                 ${historyHtml}
-            `;
+            `);
 
             this.entriesEl.appendChild(entry);
         });

@@ -4,7 +4,7 @@
  */
 
 import { t } from '../utils/i18n.js';
-import { escapeHtml, formatDateTime, generateId } from '../utils/helpers.js';
+import { escapeHtml, formatDateTime, generateId, safeSetHTML } from '../utils/helpers.js';
 import { ICONS } from '../config/icons.js';
 import { MAX_CLIPBOARD_ITEMS, MAX_IMAGE_SIZE_BYTES } from '../config/constants.js';
 
@@ -83,15 +83,15 @@ export class ClipboardPanel {
      * Render clipboard items
      */
     render() {
-        this.container.innerHTML = '';
+        this.container.replaceChildren();
 
         if (this.items.length === 0) {
-            this.container.innerHTML = `
+            safeSetHTML(this.container, `
                 <div class="empty-state">
                     <div class="empty-state-icon">${ICONS.clip}</div>
                     <div class="empty-state-text">${t('clipboardEmpty')}<br><small>${t('clipboardPasteHint')}</small></div>
                 </div>
-            `;
+            `);
             return;
         }
 
@@ -110,7 +110,7 @@ export class ClipboardPanel {
                 contentHtml = `<div class="clipboard-item-content">${escapeHtml(item.content)}</div>`;
             }
 
-            itemEl.innerHTML = `
+            safeSetHTML(itemEl, `
                 ${contentHtml}
                 <div class="clipboard-item-meta">${ICONS.calendar} ${formatDateTime(item.createdAt || Date.now())}</div>
                 <div class="clipboard-item-actions">
@@ -118,7 +118,7 @@ export class ClipboardPanel {
                     ${item.type !== 'image' ? `<button class="clipboard-item-btn task">${ICONS.filePlus} ${t('task')}</button>` : ''}
                     <button class="clipboard-item-btn delete">${ICONS.trash}</button>
                 </div>
-            `;
+            `);
 
             // Copy button
             itemEl.querySelector('.copy').addEventListener('click', () => {

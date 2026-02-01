@@ -9,7 +9,7 @@ import {
 } from './modules/config/constants.js';
 import { StorageService } from './modules/services/storage.js';
 import { t, setLanguage, getLanguage } from './modules/utils/i18n.js';
-import { formatDateTime, formatDate, fuzzyMatch, escapeHtml, generateId } from './modules/utils/helpers.js';
+import { formatDateTime, formatDate, fuzzyMatch, escapeHtml, generateId, safeSetHTML } from './modules/utils/helpers.js';
 import { TimeTracker } from './modules/ui/TimeTracker.js';
 import { ClipboardPanel } from './modules/ui/ClipboardPanel.js';
 import { ArchiveService } from './modules/services/ArchiveService.js';
@@ -444,7 +444,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderTasks() {
-        [todoList, inProgressList, doneList].forEach(list => list.innerHTML = '');
+        [todoList, inProgressList, doneList].forEach(list => list.replaceChildren());
 
         // Sort by: pinned first, then priority (high > medium > low)
         const priorityOrder = { high: 0, medium: 1, low: 2 };
@@ -470,10 +470,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (list.children.length === 0) {
                 const emptyState = document.createElement('div');
                 emptyState.className = 'empty-state';
-                emptyState.innerHTML = `
+                safeSetHTML(emptyState, `
                     <div class="empty-state-icon">${icons.file}</div>
                     <div class="empty-state-text">${t('noTasks')}</div>
-                `;
+                `);
                 list.appendChild(emptyState);
             }
         });
@@ -503,7 +503,7 @@ document.addEventListener('DOMContentLoaded', () => {
             additionalInfoHtml = `<div class="task-additional-info">${icons.info} ${escapeHtml(task.additionalInfo)}</div>`;
         }
 
-        div.innerHTML = `
+        safeSetHTML(div, `
             <div class="task-content">${escapeHtml(task.content)}</div>
             ${additionalInfoHtml}
             <div class="task-footer">
@@ -521,7 +521,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <span class="task-priority priority-${task.priority || 'medium'}">${getPriorityLabel(task.priority)}</span>
                 </div>
             </div>
-        `;
+        `);
 
         // Drag events (must stay on element for dataTransfer)
         div.addEventListener('dragstart', (e) => {
@@ -613,15 +613,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderClipboardItems() {
-        clipboardItemsContainer.innerHTML = '';
+        clipboardItemsContainer.replaceChildren();
 
         if (clipboardItems.length === 0) {
-            clipboardItemsContainer.innerHTML = `
+            safeSetHTML(clipboardItemsContainer, `
                 <div class="empty-state">
                     <div class="empty-state-icon">${icons.clip}</div>
                     <div class="empty-state-text">${t('clipboardEmpty')}<br><small>${t('clipboardPasteHint')}</small></div>
                 </div>
-            `;
+            `);
             return;
         }
 
@@ -641,7 +641,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 contentHtml = `<div class="clipboard-item-content">${escapeHtml(item.content)}</div>`;
             }
 
-            itemEl.innerHTML = `
+            safeSetHTML(itemEl, `
                 ${contentHtml}
                 <div class="clipboard-item-meta">${icons.calendar} ${formatDateTime(item.createdAt || Date.now())}</div>
                 <div class="clipboard-item-actions">
@@ -649,7 +649,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     ${item.type !== 'image' ? `<button class="clipboard-item-btn task">${icons.filePlus} ${t('task')}</button>` : ''}
                     <button class="clipboard-item-btn delete">${icons.trash}</button>
                 </div>
-            `;
+            `);
 
             clipboardItemsContainer.appendChild(itemEl);
         });
@@ -767,10 +767,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 `;
             });
-            taskHistoryList.innerHTML = historyHtml;
+            safeSetHTML(taskHistoryList, historyHtml);
         } else {
             taskHistorySection.classList.add('hidden');
-            taskHistoryList.innerHTML = '';
+            taskHistoryList.replaceChildren();
         }
 
         showModal();
@@ -849,7 +849,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function showConfirmModal(title, message, okText, cancelText) {
         return new Promise((resolve) => {
             confirmResolve = resolve;
-            document.getElementById('confirm-modal-title').innerHTML = `
+            safeSetHTML(document.getElementById('confirm-modal-title'), `
                 <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="12" cy="12" r="10"></circle>
@@ -857,7 +857,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <line x1="12" y1="16" x2="12.01" y2="16"></line>
                 </svg>
                 ${title}
-            `;
+            `);
             document.getElementById('confirm-modal-message').textContent = message;
 
             const okBtn = document.getElementById('confirm-ok-btn');
@@ -1142,7 +1142,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Disable button during test
         if (testBtn) {
             testBtn.disabled = true;
-            testBtn.innerHTML = `<span class="sync-testing-spinner"></span> ${t('syncTesting') || 'Testing...'}`;
+            safeSetHTML(testBtn, `<span class="sync-testing-spinner"></span> ${t('syncTesting') || 'Testing...'}`);
         }
         
         try {
@@ -1167,14 +1167,14 @@ document.addEventListener('DOMContentLoaded', () => {
             // Re-enable button
             if (testBtn) {
                 testBtn.disabled = false;
-                testBtn.innerHTML = `
+                safeSetHTML(testBtn, `
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
                         <polyline points="22 4 12 14.01 9 11.01"></polyline>
                     </svg>
                     <span data-i18n="syncTestConnection">${t('syncTestConnection') || 'Verbindung testen'}</span>
-                `;
+                `);
             }
         }
     }
@@ -1290,7 +1290,7 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.setAttribute('aria-label', t('close') || 'Schließen');
         });
 
-        document.querySelector('#archive-logs-modal h2').innerHTML = `
+        safeSetHTML(document.querySelector('#archive-logs-modal h2'), `
             <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="2" y="4" width="20" height="5" rx="2"></rect>
@@ -1298,7 +1298,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <path d="M10 13h4"></path>
             </svg>
             ${t('archiveLogs')}
-        `;
+        `);
         document.getElementById('archive-search-input').placeholder = t('searchPlaceholder');
 
         // Archive filter labels and buttons
@@ -1328,22 +1328,22 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         // Worktime modal
-        document.querySelector('#worktime-modal h2').innerHTML = `
+        safeSetHTML(document.querySelector('#worktime-modal h2'), `
             <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="10"></circle>
                 <polyline points="12 6 12 12 16 14"></polyline>
             </svg>
             ${t('worktimeLog')}
-        `;
-        document.getElementById('clear-worktime-btn').innerHTML = `
+        `);
+        safeSetHTML(document.getElementById('clear-worktime-btn'), `
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="3 6 5 6 21 6"></polyline>
                 <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
             </svg>
             ${t('deleteAll')}
-        `;
+        `);
 
         // Clipboard panel
         document.querySelector('.clipboard-header h3').textContent = t('clipboard');
@@ -1352,7 +1352,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Clipboard buttons
         const clipboardBtns = document.querySelectorAll('.clipboard-buttons .clipboard-btn');
         if (clipboardBtns[0]) {
-            clipboardBtns[0].innerHTML = `
+            safeSetHTML(clipboardBtns[0], `
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="12" y1="17" x2="12" y2="3"></line>
@@ -1360,10 +1360,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     <polyline points="17 8 12 3 7 8"></polyline>
                 </svg>
                 ${t('saveText')}
-            `;
+            `);
         }
         if (clipboardBtns[1]) {
-            clipboardBtns[1].innerHTML = `
+            safeSetHTML(clipboardBtns[1], `
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
@@ -1371,23 +1371,23 @@ document.addEventListener('DOMContentLoaded', () => {
                     <polyline points="21 15 16 10 5 21"></polyline>
                 </svg>
                 ${t('image')}
-            `;
+            `);
         }
 
         // Time tracker buttons
         const trackerStartBtn = document.getElementById('tracker-start-btn');
         const trackerLogBtn = document.getElementById('tracker-log-btn');
         if (trackerStartBtn && !timeTrackerModule.getState().isRunning) {
-            trackerStartBtn.innerHTML = `
+            safeSetHTML(trackerStartBtn, `
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <polygon points="5 3 19 12 5 21 5 3"></polygon>
                 </svg>
                 ${t('start')}
-            `;
+            `);
         }
         if (trackerLogBtn) {
-            trackerLogBtn.innerHTML = `
+            safeSetHTML(trackerLogBtn, `
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
@@ -1396,18 +1396,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     <line x1="16" y1="17" x2="8" y2="17"></line>
                 </svg>
                 ${t('log')}
-            `;
+            `);
         }
 
         // Settings modal
-        document.querySelector('#settings-modal h2').innerHTML = `
+        safeSetHTML(document.querySelector('#settings-modal h2'), `
             <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="3"></circle>
                 <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
             </svg>
             ${t('settings')}
-        `;
+        `);
 
         // Settings form labels
         const settingsLabels = document.querySelectorAll('#settings-modal .form-label');
@@ -1416,7 +1416,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Settings buttons
         document.getElementById('cancel-settings-btn').textContent = t('cancel');
-        document.getElementById('save-settings-btn').innerHTML = `
+        safeSetHTML(document.getElementById('save-settings-btn'), `
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
@@ -1424,7 +1424,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <polyline points="7 3 7 8 15 8"></polyline>
             </svg>
             ${t('save')}
-        `;
+        `);
 
         // Re-render dynamic content
         renderTasks();
@@ -1465,7 +1465,7 @@ document.addEventListener('DOMContentLoaded', () => {
             info: icons.info
         };
 
-        toast.querySelector('.toast-icon').innerHTML = iconMap[type] || iconMap.info;
+        safeSetHTML(toast.querySelector('.toast-icon'), iconMap[type] || iconMap.info);
         toast.querySelector('.toast-message').textContent = message;
         toast.className = `toast ${type}`;
 

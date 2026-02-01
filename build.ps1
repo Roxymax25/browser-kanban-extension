@@ -7,26 +7,15 @@ param(
 )
 
 if ($Help) {
-    Write-Host @"
-Dashboard & Clipboard Extension Build Script
-============================================
-
-Usage: .\build.ps1
-
-This script will:
-1. Bundle Firefox modules (combine all JS files into one)
-2. Create chrome.zip for Chrome Web Store
-3. Create firefox.zip for Firefox Add-ons
-
-Requirements:
-- PowerShell 5.0 or higher
-- Windows (uses Compress-Archive)
-
-Output:
-- dist/chrome.zip  (upload to Chrome Web Store)
-- dist/firefox.zip (upload to Firefox Add-ons)
-
-"@
+    Write-Host "Dashboard & Clipboard Extension Build Script"
+    Write-Host "============================================"
+    Write-Host ""
+    Write-Host "Usage: .\build.ps1"
+    Write-Host ""
+    Write-Host "This script will:"
+    Write-Host "1. Bundle Firefox modules (combine all JS files into one)"
+    Write-Host "2. Create chrome.zip for Chrome Web Store"
+    Write-Host "3. Create firefox.zip for Firefox Add-ons"
     exit 0
 }
 
@@ -80,7 +69,7 @@ function Remove-ImportsExports {
         $inner = $match.Groups[1].Value
         $aliasParts = [regex]::Match($inner, '(\w+)\s+as\s+(\w+)')
         if ($aliasParts.Success) {
-            $aliases += [PSCustomObject]@{
+            $script:aliases += [PSCustomObject]@{
                 original = $aliasParts.Groups[1].Value
                 alias = $aliasParts.Groups[2].Value
             }
@@ -88,9 +77,9 @@ function Remove-ImportsExports {
     }
     
     # Remove import statements
-    $content = [regex]::Replace($content, 'import\s+.*?from\s+[''"][^''"]+[''"];?\n?', '')
-    $content = [regex]::Replace($content, 'import\s+[''"][^''"]+[''"];?\n?', '')
-    $content = [regex]::Replace($content, 'import\s*\{[^}]+\}\s*from\s+[''"][^''"]+[''"];?\n?', '')
+    $content = [regex]::Replace($content, 'import\s+.*?from\s+[''"][^''\"]+[''""];?\n?', '')
+    $content = [regex]::Replace($content, 'import\s+[''"][^''\"]+[''""];?\n?', '')
+    $content = [regex]::Replace($content, 'import\s*\{[^}]+\}\s*from\s+[''"][^''\"]+[''""];?\n?', '')
     
     # Remove export statements
     $content = [regex]::Replace($content, 'export\s+(default\s+)?', '')
@@ -103,19 +92,19 @@ function Remove-ImportsExports {
 foreach ($module in $modules) {
     $fullPath = Join-Path $firefoxDir $module
     if (Test-Path $fullPath) {
-        Write-Host "  → $module" -ForegroundColor Gray
+        Write-Host "  -> $module" -ForegroundColor Gray
         $content = Get-Content $fullPath -Raw
         $content = Remove-ImportsExports -content $content
         $bundledCode += "`n// === $module ===`n"
         $bundledCode += $content
         $bundledCode += "`n"
     } else {
-        Write-Host "  ✗ $module (not found)" -ForegroundColor Red
+        Write-Host "  X $module (not found)" -ForegroundColor Red
     }
 }
 
 # Process main script
-Write-Host "  → script.js (main)" -ForegroundColor Gray
+Write-Host "  -> script.js (main)" -ForegroundColor Gray
 $mainScriptPath = Join-Path $firefoxDir "script.js"
 $mainScript = Get-Content $mainScriptPath -Raw
 
@@ -150,47 +139,84 @@ $finalCode = $bundledCode + "`n// === script.js (main) ===`n" + $aliasDefinition
 # Write bundled file
 $bundledPath = Join-Path $firefoxDir "script.bundled.js"
 $finalCode | Out-File -FilePath $bundledPath -Encoding UTF8
-Write-Host "`n  ✓ Created: firefox/script.bundled.js" -ForegroundColor Green
-Write-Host "  → Aliases defined: $($uniqueAliases.ForEach({ "$($_.original) as $($_.alias)" }) -join ', ')" -ForegroundColor Gray
+Write-Host ""
+Write-Host "  OK Created: firefox/script.bundled.js" -ForegroundColor Green
 
 # Update index.html
-Write-Host "`n  → Updating index.html..." -ForegroundColor Gray
+Write-Host ""
+Write-Host "  -> Updating index.html..." -ForegroundColor Gray
 $indexPath = Join-Path $firefoxDir "index.html"
 $indexHtml = Get-Content $indexPath -Raw
 $indexHtml = $indexHtml.Replace('<script type="module" src="script.js"></script>', '<script src="script.bundled.js"></script>')
 $indexHtml | Out-File -FilePath $indexPath -Encoding UTF8
-Write-Host "  ✓ Updated: firefox/index.html" -ForegroundColor Green
+Write-Host "  OK Updated: firefox/index.html" -ForegroundColor Green
 
-Write-Host "`n  ✓ Firefox bundling complete!" -ForegroundColor Green
+Write-Host ""
+Write-Host "  OK Firefox bundling complete!" -ForegroundColor Green
 Write-Host ""
 
 # Step 2: Build Chrome version
 Write-Host "Step 2: Building Chrome version..." -ForegroundColor Yellow
-try {
-    $chromeDir = Join-Path $scriptDir "chrome"
-    $chromeZip = Join-Path $distDir "chrome.zip"
-    
-    Compress-Archive -Path "$chromeDir\*" -DestinationPath $chromeZip -Force
-    Write-Host "  ✓ Chrome version built: dist/chrome.zip" -ForegroundColor Green
-} catch {
-    Write-Host "  ✗ Failed to build Chrome version: $($_.Exception.Message)" -ForegroundColor Red
+$chromeDir = Join-Path $scriptDir "chrome"
+$chromeZip = Join-Path $distDir "chrome.zip"
+
+if (Test-Path $chromeZip) {
+    Remove-Item $chromeZip -Force
 }
+Compress-Archive -Path "$chromeDir\*" -DestinationPath $chromeZip -Force
+Write-Host "  OK Chrome version built: dist/chrome.zip" -ForegroundColor Green
 Write-Host ""
 
 # Step 3: Build Firefox version
 Write-Host "Step 3: Building Firefox version..." -ForegroundColor Yellow
-try {
-    $firefoxZip = Join-Path $distDir "firefox.zip"
-    
-    Compress-Archive -Path "$firefoxDir\*" -DestinationPath $firefoxZip -Force
-    Write-Host "  ✓ Firefox version built: dist/firefox.zip" -ForegroundColor Green
-} catch {
-    Write-Host "  ✗ Failed to build Firefox version: $($_.Exception.Message)" -ForegroundColor Red
+$firefoxZip = Join-Path $distDir "firefox.zip"
+
+if (Test-Path $firefoxZip) {
+    Remove-Item $firefoxZip -Force
 }
+
+# Only include necessary files (exclude modules folder since it's bundled)
+$filesToInclude = @(
+    "manifest.json",
+    "index.html",
+    "style.css",
+    "script.bundled.js",
+    "background.js",
+    "icon.png",
+    "icon-16.png",
+    "icon-48.png",
+    "icon-128.png",
+    "Icon_128.png",
+    "README.md",
+    "PRIVACY.md"
+)
+
+# Create temp folder for Firefox build
+$tempFirefox = Join-Path $distDir "firefox_temp"
+if (Test-Path $tempFirefox) {
+    Remove-Item $tempFirefox -Recurse -Force
+}
+New-Item -ItemType Directory -Path $tempFirefox | Out-Null
+
+# Copy only needed files
+foreach ($file in $filesToInclude) {
+    $sourcePath = Join-Path $firefoxDir $file
+    if (Test-Path $sourcePath) {
+        Copy-Item $sourcePath -Destination $tempFirefox
+    }
+}
+
+# Create ZIP from temp folder
+Compress-Archive -Path "$tempFirefox\*" -DestinationPath $firefoxZip -Force
+
+# Cleanup temp folder
+Remove-Item $tempFirefox -Recurse -Force
+
+Write-Host "  OK Firefox version built: dist/firefox.zip" -ForegroundColor Green
 
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "✅ Build complete!" -ForegroundColor Green
+Write-Host "Build complete!" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "Files created:" -ForegroundColor White
